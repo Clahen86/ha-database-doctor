@@ -4,6 +4,13 @@
 
 **Wrong numbers in the energy dashboard fixed with one tap – and a clear view of what fills your database.**
 
+<p>
+<img src="docs/panel-overview.png" alt="Overview: what fills the database, a suggestion and the forecast" width="200">
+<img src="docs/panel-energy.png" alt="Energy: spikes, gaps, statistics warnings and use no device explains" width="200">
+<img src="docs/panel-data.png" alt="Data: what takes up the most, per device, with where it is used" width="200">
+<img src="docs/panel-settings.png" alt="Settings: save less often, profiles, how long details are kept" width="200">
+</p>
+
 Energy Doctor adds a panel to the sidebar:
 
 - **Wrong numbers in Energy:** finds hours with spikes (a fridge using 50,000 kWh in one hour) and negative hours, and sets them to what is normal for that meter – with Home Assistant's own *Adjust sum*. Every fix can be undone.
