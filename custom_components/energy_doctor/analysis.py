@@ -12,7 +12,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 
 from homeassistant.components.recorder import get_instance
 from homeassistant.components.recorder.db_schema import States, StatesMeta, Statistics, StatisticsMeta
@@ -37,6 +37,28 @@ class DbInfo:
 def _file_size(path: str) -> int | None:
     sizes = [os.path.getsize(p) for p in (path, f"{path}-wal", f"{path}-shm") if os.path.isfile(p)]
     return sum(sizes) if sizes else None
+
+
+def db_size(hass: HomeAssistant) -> int | None:
+    """Runs in the recorder's thread: the database's size - the file for SQLite, the server's own figure for
+    MariaDB/MySQL and PostgreSQL (a read-only query of the server's statistics)."""
+    instance = get_instance(hass)
+    url = instance.db_url
+    if url.startswith(SQLITE):
+        return _file_size(url.removeprefix(SQLITE))
+    query = None
+    if url.startswith("mysql"):
+        query = "SELECT SUM(data_length + index_length) FROM information_schema.TABLES WHERE table_schema = DATABASE()"
+    elif url.startswith("postgresql"):
+        query = "SELECT pg_database_size(current_database())"
+    if query is None:
+        return None
+    try:
+        with session_scope(session=instance.get_session(), read_only=True) as session:
+            value = session.execute(text(query)).scalar()
+    except Exception:  # noqa: BLE001 - no rights to the server's statistics: the size stays unknown
+        return None
+    return int(value) if value else None
 
 
 def read_db(hass: HomeAssistant) -> DbInfo:
@@ -69,7 +91,7 @@ def read_db(hass: HomeAssistant) -> DbInfo:
     url = instance.db_url
     path = url.removeprefix(SQLITE) if url.startswith(SQLITE) else None
     engine = "sqlite" if path else url.split(":", 1)[0]
-    size = _file_size(path) if path else None
+    size = db_size(hass)
     try:
         free = shutil.disk_usage(os.path.dirname(path) if path else hass.config.path()).free
     except OSError:

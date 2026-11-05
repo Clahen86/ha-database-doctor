@@ -1,6 +1,13 @@
 // Energy Doctor panel: tabs Overview · Energy · Data · Settings.
 
 const EN = {
+  vgroups: {"no_state": "{n} entities no longer exist", "entity_no_longer_recorded": "{n} entities are no longer recorded", "entity_not_recorded": "{n} entities are not recorded", "state_class_removed": "{n} entities no longer have a state class"},
+  vexplain: {"no_state": "Old names from devices that were renamed or paired again. Their old statistics are still in the database.", "entity_no_longer_recorded": "They are excluded from the recorder (by you or an integration). The statistics from before are still there.", "entity_not_recorded": "They are excluded from the recorder. The statistics from before are still there.", "state_class_removed": "They no longer give statistics. The statistics from before are still there."},
+  vclearAll: "Delete old statistics for all {n}",
+  vshow: "Show them",
+  vnotEnergy: "None of them are used in the energy dashboard.",
+  vinEnergy: "{n} of them are used in the energy dashboard – keep those.",
+  sizeUnknown: "The size couldn't be read from the database server – the rest works the same.",
   updated: "Updated {n}",
   agoNow: "just now",
   agoMin: "{n} min ago",
@@ -20,7 +27,6 @@ const EN = {
   growing: "Your database grows by {n} a day.",
   diskFull: "The disk is full in about {n}.",
   months: "{n} months", years: "{n} years", days: "{n} days",
-  sizeUnknown: "The size is only known for SQLite – the rest works the same.",
   groups: { sensors: "Sensors", energy: "Energy", lights: "Lights", signals: "Signals", other: "Other" },
   graphTitle: "Size over time",
   graphNow: "Now", graphAsIs: "If you do nothing", graphOptimised: "After Optimise",
@@ -146,6 +152,13 @@ const EN = {
 };
 
 const DA = {
+  vgroups: {"no_state": "{n} entiteter findes ikke længere", "entity_no_longer_recorded": "{n} entiteter gemmes ikke længere", "entity_not_recorded": "{n} entiteter gemmes ikke", "state_class_removed": "{n} entiteter har ikke længere en state class"},
+  vexplain: {"no_state": "Gamle navne fra enheder, der er omdøbt eller parret igen. Deres gamle statistik ligger stadig i databasen.", "entity_no_longer_recorded": "De er slået fra i recorderen (af dig eller en integration). Statistikken fra før ligger der stadig.", "entity_not_recorded": "De er slået fra i recorderen. Statistikken fra før ligger der stadig.", "state_class_removed": "De giver ikke længere statistik. Statistikken fra før ligger der stadig."},
+  vclearAll: "Slet gammel statistik for alle {n}",
+  vshow: "Vis dem",
+  vnotEnergy: "Ingen af dem bruges i Energi-dashboardet.",
+  vinEnergy: "{n} af dem bruges i Energi-dashboardet – behold dem.",
+  sizeUnknown: "Størrelsen kunne ikke læses fra databaseserveren – resten virker på samme måde.",
   updated: "Opdateret {n}",
   agoNow: "lige nu",
   agoMin: "for {n} min. siden",
@@ -165,7 +178,6 @@ const DA = {
   growing: "Din database vokser {n} om dagen.",
   diskFull: "Disken er fuld om ca. {n}.",
   months: "{n} måneder", years: "{n} år", days: "{n} dage",
-  sizeUnknown: "Størrelsen kendes kun for SQLite – resten virker på samme måde.",
   groups: { sensors: "Sensorer", energy: "Energi", lights: "Lys", signals: "Signaler", other: "Andet" },
   graphTitle: "Størrelse over tid",
   graphNow: "Nu", graphAsIs: "Hvis du ikke gør noget", graphOptimised: "Efter Optimer",
@@ -291,6 +303,13 @@ const DA = {
 };
 
 const DE = {
+  vgroups: {"no_state": "{n} Entitäten gibt es nicht mehr", "entity_no_longer_recorded": "{n} Entitäten werden nicht mehr aufgezeichnet", "entity_not_recorded": "{n} Entitäten werden nicht aufgezeichnet", "state_class_removed": "{n} Entitäten haben keine State-Class mehr"},
+  vexplain: {"no_state": "Alte Namen von Geräten, die umbenannt oder neu gekoppelt wurden. Ihre alte Statistik liegt noch in der Datenbank.", "entity_no_longer_recorded": "Sie sind im Recorder ausgeschlossen (von dir oder einer Integration). Die Statistik von vorher ist noch da.", "entity_not_recorded": "Sie sind im Recorder ausgeschlossen. Die Statistik von vorher ist noch da.", "state_class_removed": "Sie liefern keine Statistik mehr. Die Statistik von vorher ist noch da."},
+  vclearAll: "Alte Statistik für alle {n} löschen",
+  vshow: "Anzeigen",
+  vnotEnergy: "Keine davon wird im Energie-Dashboard genutzt.",
+  vinEnergy: "{n} davon werden im Energie-Dashboard genutzt – behalte diese.",
+  sizeUnknown: "Die Größe konnte nicht vom Datenbankserver gelesen werden – der Rest funktioniert gleich.",
   updated: "Aktualisiert {n}",
   agoNow: "gerade eben",
   agoMin: "vor {n} Min.",
@@ -306,7 +325,6 @@ const DE = {
   fresh: "Erneut prüfen", perDay: "+{n} pro Tag", healthy: "Deine Datenbank ist gesund.",
   growing: "Deine Datenbank wächst um {n} pro Tag.", diskFull: "Der Speicher ist in etwa {n} voll.",
   months: "{n} Monaten", years: "{n} Jahren", days: "{n} Tagen",
-  sizeUnknown: "Die Größe ist nur für SQLite bekannt – der Rest funktioniert gleich.",
   groups: { sensors: "Sensoren", energy: "Energie", lights: "Licht", signals: "Signale", other: "Sonstiges" },
   graphTitle: "Größe im Zeitverlauf", graphNow: "Jetzt", graphAsIs: "Wenn du nichts tust", graphOptimised: "Nach Optimieren",
   graphFew: "Die Grafik füllt sich Tag für Tag.",
@@ -383,6 +401,13 @@ const DE = {
 };
 
 const SV = {
+  vgroups: {"no_state": "{n} entiteter finns inte längre", "entity_no_longer_recorded": "{n} entiteter spelas inte längre in", "entity_not_recorded": "{n} entiteter spelas inte in", "state_class_removed": "{n} entiteter har inte längre en state class"},
+  vexplain: {"no_state": "Gamla namn från enheter som bytt namn eller parats igen. Deras gamla statistik finns kvar i databasen.", "entity_no_longer_recorded": "De är undantagna i recordern (av dig eller en integration). Statistiken från tidigare finns kvar.", "entity_not_recorded": "De är undantagna i recordern. Statistiken från tidigare finns kvar.", "state_class_removed": "De ger inte längre statistik. Statistiken från tidigare finns kvar."},
+  vclearAll: "Ta bort gammal statistik för alla {n}",
+  vshow: "Visa dem",
+  vnotEnergy: "Ingen av dem används i energipanelen.",
+  vinEnergy: "{n} av dem används i energipanelen – behåll dem.",
+  sizeUnknown: "Storleken kunde inte läsas från databasservern – resten fungerar likadant.",
   updated: "Uppdaterad {n}",
   agoNow: "nyss",
   agoMin: "för {n} min sedan",
@@ -398,7 +423,6 @@ const SV = {
   fresh: "Kontrollera igen", perDay: "+{n} per dag", healthy: "Din databas är frisk.",
   growing: "Din databas växer {n} per dag.", diskFull: "Disken är full om ungefär {n}.",
   months: "{n} månader", years: "{n} år", days: "{n} dagar",
-  sizeUnknown: "Storleken är bara känd för SQLite – resten fungerar likadant.",
   groups: { sensors: "Sensorer", energy: "Energi", lights: "Ljus", signals: "Signaler", other: "Övrigt" },
   graphTitle: "Storlek över tid", graphNow: "Nu", graphAsIs: "Om du inte gör något", graphOptimised: "Efter Optimera",
   graphFew: "Grafen fylls i dag för dag.",
@@ -475,6 +499,13 @@ const SV = {
 };
 
 const NL = {
+  vgroups: {"no_state": "{n} entiteiten bestaan niet meer", "entity_no_longer_recorded": "{n} entiteiten worden niet meer opgenomen", "entity_not_recorded": "{n} entiteiten worden niet opgenomen", "state_class_removed": "{n} entiteiten hebben geen state class meer"},
+  vexplain: {"no_state": "Oude namen van apparaten die hernoemd of opnieuw gekoppeld zijn. Hun oude statistiek staat nog in de database.", "entity_no_longer_recorded": "Ze zijn uitgesloten in de recorder (door jou of een integratie). De statistiek van eerder is er nog.", "entity_not_recorded": "Ze zijn uitgesloten in de recorder. De statistiek van eerder is er nog.", "state_class_removed": "Ze geven geen statistiek meer. De statistiek van eerder is er nog."},
+  vclearAll: "Oude statistiek voor alle {n} verwijderen",
+  vshow: "Toon ze",
+  vnotEnergy: "Geen ervan wordt gebruikt in het energiedashboard.",
+  vinEnergy: "{n} ervan worden gebruikt in het energiedashboard – houd die.",
+  sizeUnknown: "De grootte kon niet van de databaseserver worden gelezen – de rest werkt hetzelfde.",
   updated: "Bijgewerkt {n}",
   agoNow: "zojuist",
   agoMin: "{n} min geleden",
@@ -490,7 +521,6 @@ const NL = {
   fresh: "Opnieuw controleren", perDay: "+{n} per dag", healthy: "Je database is gezond.",
   growing: "Je database groeit {n} per dag.", diskFull: "De schijf is over ongeveer {n} vol.",
   months: "{n} maanden", years: "{n} jaar", days: "{n} dagen",
-  sizeUnknown: "De grootte is alleen bekend voor SQLite – de rest werkt hetzelfde.",
   groups: { sensors: "Sensoren", energy: "Energie", lights: "Lampen", signals: "Signalen", other: "Overig" },
   graphTitle: "Grootte door de tijd", graphNow: "Nu", graphAsIs: "Als je niets doet", graphOptimised: "Na Optimaliseren",
   graphFew: "De grafiek vult zich dag na dag.",
@@ -847,6 +877,23 @@ class EnergyDoctorPanel extends HTMLElement {
     if (!this.extra) return `<div class="card"><div class="spinner small-spin"></div></div>`;
     const list = this.extra.validation || [];
     if (!list.length) return `<div class="card okcard"><ha-icon icon="mdi:chart-box-outline"></ha-icon><span>${this.t("validationNone")}</span></div>`;
+    // Old statistics of entities that are gone or not recorded: one group each, with one button for all.
+    const energy = new Set(list.filter((v) => v.in_energy).map((v) => v.statistic_id));
+    const groupTypes = ["no_state", "entity_no_longer_recorded", "entity_not_recorded", "state_class_removed"];
+    const groups = groupTypes.map((type) => ({ type, items: list.filter((v) => v.type === type) })).filter((g) => g.items.length);
+    const single = list.filter((v) => !groupTypes.includes(v.type));
+    const group = (g) => {
+      const open = this.openGroups.has(`v:${g.type}`);
+      const inEnergy = g.items.filter((v) => energy.has(v.statistic_id));
+      const free = g.items.filter((v) => !energy.has(v.statistic_id));
+      return `<div class="vgroup"><div class="name">${esc(this.t(`vgroups.${g.type}`, { n: g.items.length }))}</div>
+        <div class="small muted">${esc(this.t(`vexplain.${g.type}`))}</div>
+        <div class="small ${inEnergy.length ? "amber" : "green"}">${esc(inEnergy.length ? this.t("vinEnergy", { n: inEnergy.length }) : this.t("vnotEnergy"))}</div>
+        <div class="row wrap">${free.length ? `<button class="soft redbg" data-act="clearGroup" data-type="${g.type}">${esc(this.t("vclearAll", { n: free.length }))}</button>` : ""}
+          <button class="link" data-act="toggleGroup" data-key="v:${g.type}">${this.t("vshow")} <ha-icon icon="${open ? "mdi:chevron-up" : "mdi:chevron-down"}"></ha-icon></button></div>
+        ${open ? `<div class="vlist">${g.items.map((v) => `<div class="mono small">${esc(v.statistic_id)}${energy.has(v.statistic_id) ? ` <span class="pill blue">${this.t("groups.energy")}</span>` : ""}</div>`).join("")}</div>` : ""}
+      </div>`;
+    };
     const row = (v) => {
       const text = this.t(`vtypes.${v.type}`, { from: v.data.metadata_unit || "?", to: v.data.state_unit || "?" });
       const action = v.fix === "open"
@@ -855,7 +902,7 @@ class EnergyDoctorPanel extends HTMLElement {
       return `<div class="irow"><div class="grow"><div class="name">${esc(v.name)}</div><div class="small muted">${esc(text)}</div><div class="mono small muted">${esc(v.statistic_id)}</div></div>${action}</div>`;
     };
     return `<div class="card"><div class="head"><i class="dot" style="background:#f59e0b"></i><b>${this.t("validation")}</b><span class="muted small right">${this.t("found", { n: list.length })}</span></div>
-      ${list.map(row).join("")}<p class="muted small">${this.t("clearWarn")}</p></div>`;
+      ${groups.map(group).join("")}${single.map(row).join("")}<p class="muted small">${this.t("clearWarn")}</p></div>`;
   }
 
   unaccountedCard() {
@@ -1018,7 +1065,9 @@ class EnergyDoctorPanel extends HTMLElement {
     else if (this.view === "done") body = this.doneView();
     else if (!this.data) body = `<div class="card"><p class="red">${esc(this.message)}</p><button class="primary" data-act="fresh">${this.t("fresh")}</button></div>`;
     else body = `${this.message ? `<div class="card"><p class="red">${esc(this.message)}</p></div>` : ""}${{ overview: () => this.overviewTab(), energy: () => this.energyTab(), data: () => this.dataTab(), settings: () => this.settingsTab() }[this.tab]()}`;
-    const issues = this.data ? this.visibleIssues().length + (this.extra?.validation?.length || 0) : 0;
+    // The badge counts things to look at: each wrong hour, and each group of statistics warnings.
+    const vtypes = new Set((this.extra?.validation || []).map((v) => (["no_state", "entity_no_longer_recorded", "entity_not_recorded", "state_class_removed"].includes(v.type) ? v.type : v.id)));
+    const issues = this.data ? this.visibleIssues().length + vtypes.size : 0;
     const tabBar = tabs && this.data ? `<nav class="tabs" role="tablist">${["overview", "energy", "data", "settings"].map((t) => `<button role="tab" aria-selected="${this.tab === t}" class="${this.tab === t ? "on" : ""}" data-act="tab" data-tab="${t}">${this.t(`tabs.${t}`)}${t === "energy" && issues ? `<span class="badge">${issues}</span>` : ""}</button>`).join("")}</nav>` : "";
     const y = this.scrollTop;
     this.shadowRoot.innerHTML = `<style>${STYLE}</style>
@@ -1145,6 +1194,10 @@ class EnergyDoctorPanel extends HTMLElement {
       const v = this.extra.validation.find((x) => x.id === d.id);
       if (v?.fix === "clear" && !window.confirm(this.t("clearWarn"))) return;
       this.run(() => this.ws("fix_validation", { issues: [d.id] }), this.t("saved"));
+    } else if (a === "clearGroup") {
+      const ids = this.extra.validation.filter((v) => v.type === d.type && !v.in_energy).map((v) => v.id);
+      if (!window.confirm(this.t("clearWarn"))) return;
+      this.run(() => this.ws("fix_validation", { issues: ids }), this.t("saved"));
     } else if (a === "addMeters") {
       const ids = [...this.mpicked];
       this.run(async () => ({ ...(await this.ws("add_to_energy", { statistics: ids })), undoable: true }), (r) => this.t("addedN", { n: r.added }));
@@ -1292,6 +1345,8 @@ select{height:40px;border-radius:10px;border:1px solid var(--divider-color,#d6dc
 .switch:checked{background:var(--primary-color,#0b6fa4)}.switch:checked::after{left:21px}
 .switch:focus-visible{outline:2px solid var(--primary-color);outline-offset:2px}
 .why summary{cursor:pointer;min-height:24px}
+.vgroup{display:flex;flex-direction:column;gap:6px;padding:12px 0;border-bottom:1px solid var(--divider-color,#eef1f4)}
+.row.wrap{flex-wrap:wrap;align-items:center}.vlist{max-height:240px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;padding:8px;border-radius:10px;background:var(--secondary-background-color,#eef1f4)}
 .aibtn{align-self:stretch;display:flex;align-items:center;justify-content:center;gap:8px}
 .working{align-items:center;text-align:center;padding:48px 18px}
 .spinner{width:40px;height:40px;border-radius:50%;border:4px solid var(--divider-color,#e8ecf1);border-top-color:var(--primary-color,#0b6fa4);animation:spin 1s linear infinite}

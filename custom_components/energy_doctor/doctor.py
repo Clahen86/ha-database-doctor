@@ -162,10 +162,7 @@ class Doctor:
         )
 
     async def _async_note_size(self, _now: Any = None) -> None:
-        url = get_instance(self.hass).db_url
-        if not url.startswith(analysis.SQLITE):
-            return
-        size = await self.hass.async_add_executor_job(analysis._file_size, url.removeprefix(analysis.SQLITE))
+        size = await get_instance(self.hass).async_add_executor_job(analysis.db_size, self.hass)
         if size:
             now = time.time()
             self.sizes[time.strftime("%Y-%m-%d")] = size
@@ -253,13 +250,21 @@ class Doctor:
     # ---------- statistics warnings and use that Energy doesn't account for ----------
 
     async def async_energy_extra(self) -> dict[str, Any]:
+        stats, _costs = await energy.async_energy_statistics(self.hass)
+        validation = await energy.async_validation(self.hass)
+        for issue in validation:
+            issue["in_energy"] = issue["statistic_id"] in stats  # never offered for deletion
         return {
-            "validation": await energy.async_validation(self.hass),
+            "validation": validation,
             "unaccounted": await energy.async_unaccounted(self.hass),
         }
 
     async def async_fix_validation(self, issue_ids: list[str]) -> dict[str, Any]:
-        issues = [i for i in await energy.async_validation(self.hass) if i["id"] in set(issue_ids)]
+        stats, _costs = await energy.async_energy_statistics(self.hass)
+        issues = [
+            i for i in await energy.async_validation(self.hass)
+            if i["id"] in set(issue_ids) and not (i["fix"] == "clear" and i["statistic_id"] in stats)
+        ]
         done = [i["id"] for i in issues if await energy.async_fix_validation(self.hass, i)]
         self._cache = None
         return {"fixed": len(done)}
