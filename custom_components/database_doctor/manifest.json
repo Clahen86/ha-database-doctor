@@ -5,6 +5,7 @@
     "automation",
     "backup",
     "energy",
+    "hassio",
     "lovelace",
     "mqtt",
     "scene",
@@ -27,5 +28,5 @@
   "issue_tracker": "https://github.com/Clahen86/ha-database-doctor/issues",
   "requirements": [],
   "single_config_entry": true,
-  "version": "0.8.0"
+  "version": "0.8.1"
 }
