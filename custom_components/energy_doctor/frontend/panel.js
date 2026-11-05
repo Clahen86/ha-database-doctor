@@ -1,19 +1,46 @@
 // Energy Doctor panel: tabs Overview · Energy · Data · Settings.
 
 const EN = {
-  vinfo: "Harmless: they are excluded from the recorder on purpose. Home Assistant keeps warning as long as the sensor has a state class – there is no old statistics left to delete.",
+  score: "Health",
+  grades: {"great": "Very good", "good": "Good", "fair": "Could be better", "poor": "Needs help"},
+  scoreOf: "{n} of 100",
+  todo: "What you can do",
+  actEnergy: "Fix {n} wrong numbers in Energy",
+  actClean: "Clean up and save {n}",
+  actRates: "Save less often – save {n} a month",
+  actValidation: "Clear old statistics",
+  actHealth: "See the health check",
+  allGood: "Everything looks good",
+  allGoodText: "No wrong numbers in Energy and nothing to clean up. Look in again in a week.",
+  statSize: "Size",
+  statGrowth: "Grows a day",
+  statDisk: "Disk full in",
+  statNever: "not soon",
+  w1t: "Welcome to Energy Doctor",
+  w1: "It finds wrong numbers in the energy dashboard and shows what fills your database – and how to keep it small.",
+  w2t: "Always safe",
+  w2: "It only uses Home Assistant's own functions, and nothing that something uses is ever touched.",
+  w3t: "It can be undone",
+  w3: "Fixes and settings can be undone, and before a clean-up it can make a backup.",
+  next: "Next",
+  start: "Get started",
+  skip: "Skip",
+  help: {"history": "History is every value Home Assistant saves, for example every 10 seconds. Statistics are hourly averages that long graphs use – they always stay.", "trim": "Keeping only a few days of history removes the second-by-second detail. Graphs, Energy and hourly statistics are not affected.", "protect": "“Never touch” keeps an entity out of every suggestion – useful when code outside Home Assistant (like AppDaemon) reads its history.", "rates": "Zigbee devices can send less often. Only devices with nothing but sensors are slowed down, and what is used never goes below Normal.", "validation": "Home Assistant keeps statistics for sensors. When a sensor is renamed or removed, its old statistics stay behind and can be cleared."},
+  energyAllGood: "Everything is in order in Energy",
+  snackUndo: "Undo",
+  vinfo: "Harmless: their history is switched off on purpose. Home Assistant keeps warning as long as the sensor makes statistics – there is no old statistics left to delete.",
   keepRule: "Keep it like this – they keep only {k} days from now on (checked every night)",
   keptPill: "Keeps {k} days",
   unkeep: "Keep everything again",
-  repackAfter: "Make the file smaller when it is done (repack)",
+  repackAfter: "Make the file smaller when it is done",
   recFreed: "≈ {n} freed in the database",
   recRepacking: "the file is being made smaller …",
   recSmaller: "the file is {n} smaller",
   recNoRoom: "too little free disk to make the file smaller",
   repackNow: "Make the file smaller",
   cleaningTitle: "Cleaning up · {p} %",
-  cleaningText: "The recorder works in the background – on a big database it can take an hour. Avoid restarting Home Assistant meanwhile (if you do, it carries on afterwards).",
-  cleanDoneText: "The recorder now removes it in the background. On a big database that can take an hour – follow it on Overview. If Home Assistant restarts meanwhile, it carries on afterwards.",
+  cleaningText: "Home Assistant works in the background – on a big database it can take an hour. Avoid restarting Home Assistant meanwhile (if you do, it carries on afterwards).",
+  cleanDoneText: "Home Assistant now removes it in the background. On a big database that can take an hour – follow it on Overview. If Home Assistant restarts meanwhile, it carries on afterwards.",
   cleanWhat: "{t} entities keep the last {k} days, and {d} deleted devices are cleaned out.",
   cleanWhatTrim: "{t} entities keep the last {k} days.",
   cleanWhatDeleted: "{d} deleted devices are cleaned out.",
@@ -108,7 +135,7 @@ const EN = {
     entity_no_longer_recorded: "Is no longer recorded – old statistics are left",
     entity_not_recorded: "Is not recorded – old statistics are left",
     no_state: "The entity is gone – old statistics are left",
-    state_class_removed: "No longer has a state class – old statistics are left",
+    state_class_removed: "No longer makes statistics – old statistics are left",
     units_changed: "The unit changed from {from} to {to}",
     mean_type_changed: "The kind of average changed",
   },
@@ -168,7 +195,7 @@ const EN = {
   explain: "Explain my database",
   explaining: "The AI is thinking …",
   cleanTitle: "Clean up",
-  cleanIntro: "This is removed with the recorder's own purge:",
+  cleanIntro: "This is removed with Home Assistant's own clean-up:",
   cleanDeleted: "All history of {n} deleted devices",
   cleanTrim: "History older than {k} days of {n} busy entities that nothing uses",
   cleanWarn: "Removed data can't be undone.",
@@ -189,19 +216,46 @@ const EN = {
 };
 
 const DA = {
-  vinfo: "Ufarligt: de er slået fra i recorderen med vilje. Home Assistant bliver ved med at advare, så længe sensoren har en state class – der er ingen gammel statistik tilbage at slette.",
+  score: "Sundhed",
+  grades: {"great": "Rigtig god", "good": "God", "fair": "Kan blive bedre", "poor": "Trænger til hjælp"},
+  scoreOf: "{n} af 100",
+  todo: "Det kan du gøre",
+  actEnergy: "Ret {n} forkerte tal i Energi",
+  actClean: "Ryd op og spar {n}",
+  actRates: "Gem sjældnere – spar {n} om måneden",
+  actValidation: "Ryd op i gammel statistik",
+  actHealth: "Se sundhedstjekket",
+  allGood: "Alt ser godt ud",
+  allGoodText: "Ingen forkerte tal i Energi og intet at rydde op. Kig forbi igen om en uge.",
+  statSize: "Størrelse",
+  statGrowth: "Vokser pr. dag",
+  statDisk: "Disk fuld om",
+  statNever: "ikke snart",
+  w1t: "Velkommen til Energi-doktor",
+  w1: "Den finder forkerte tal i Energi-dashboardet og viser, hvad der fylder i din database – og hvordan den holdes lille.",
+  w2t: "Altid sikkert",
+  w2: "Den bruger kun Home Assistants egne funktioner, og det, der bruges, bliver aldrig rørt.",
+  w3t: "Det kan fortrydes",
+  w3: "Rettelser og indstillinger kan fortrydes, og før en oprydning kan den tage en backup.",
+  next: "Næste",
+  start: "Kom i gang",
+  skip: "Spring over",
+  help: {"history": "Historik er alle de målinger, Home Assistant gemmer, fx hvert 10. sekund. Statistik er gennemsnit pr. time, som lange grafer bruger – den bliver altid.", "trim": "Når kun få dages historik gemmes, forsvinder sekund-for-sekund-detaljerne. Grafer, Energi og timeværdier påvirkes ikke.", "protect": "“Rør aldrig” holder en entitet ude af alle forslag – nyttigt, når kode uden for Home Assistant (fx AppDaemon) læser dens historik.", "rates": "Zigbee-enheder kan sende sjældnere. Kun enheder med rene sensorer sættes ned, og det, der bruges, kommer aldrig under Normal.", "validation": "Home Assistant gemmer statistik for sensorer. Når en sensor omdøbes eller fjernes, bliver dens gamle statistik liggende og kan ryddes."},
+  energyAllGood: "Alt er i orden i Energi",
+  snackUndo: "Fortryd",
+  vinfo: "Ufarligt: deres historik er slået fra med vilje. Home Assistant bliver ved med at advare, så længe sensoren laver statistik – der er ingen gammel statistik tilbage at slette.",
   keepRule: "Hold det sådan – de beholder kun {k} dage fremover (tjekkes hver nat)",
   keptPill: "Beholder {k} dage",
   unkeep: "Behold alt igen",
-  repackAfter: "Gør filen mindre, når den er færdig (komprimering)",
+  repackAfter: "Gør filen mindre, når den er færdig",
   recFreed: "≈ {n} frigivet i databasen",
   recRepacking: "filen gøres mindre …",
   recSmaller: "filen er {n} mindre",
   recNoRoom: "for lidt fri plads på disken til at gøre filen mindre",
   repackNow: "Gør filen mindre",
   cleaningTitle: "Oprydning i gang · {p} %",
-  cleaningText: "Recorderen arbejder i baggrunden – på en stor database kan det tage en time. Genstart helst ikke Home Assistant imens (gør du, fortsætter den bagefter).",
-  cleanDoneText: "Recorderen fjerner det nu i baggrunden. På en stor database kan det tage en time – følg med på Overblik. Genstarter Home Assistant imens, fortsætter den bagefter.",
+  cleaningText: "Home Assistant arbejder i baggrunden – på en stor database kan det tage en time. Genstart helst ikke Home Assistant imens (gør du, fortsætter den bagefter).",
+  cleanDoneText: "Home Assistant fjerner det nu i baggrunden. På en stor database kan det tage en time – følg med på Overblik. Genstarter Home Assistant imens, fortsætter den bagefter.",
   cleanWhat: "{t} entiteter beholder de sidste {k} dage, og {d} slettede enheder ryddes væk.",
   cleanWhatTrim: "{t} entiteter beholder de sidste {k} dage.",
   cleanWhatDeleted: "{d} slettede enheder ryddes væk.",
@@ -296,7 +350,7 @@ const DA = {
     entity_no_longer_recorded: "Gemmes ikke længere – gammel statistik er tilbage",
     entity_not_recorded: "Gemmes ikke – gammel statistik er tilbage",
     no_state: "Entiteten findes ikke længere – gammel statistik er tilbage",
-    state_class_removed: "Har ikke længere en state class – gammel statistik er tilbage",
+    state_class_removed: "Laver ikke længere statistik – gammel statistik er tilbage",
     units_changed: "Enheden er skiftet fra {from} til {to}",
     mean_type_changed: "Typen af gennemsnit er ændret",
   },
@@ -356,7 +410,7 @@ const DA = {
   explain: "Forklar min database",
   explaining: "AI'en tænker …",
   cleanTitle: "Ryd op",
-  cleanIntro: "Dette fjernes med recorderens egen oprydning:",
+  cleanIntro: "Dette fjernes med Home Assistants egen oprydning:",
   cleanDeleted: "Al historik fra {n} slettede enheder",
   cleanTrim: "Historik ældre end {k} dage fra {n} travle entiteter, som intet bruger",
   cleanWarn: "Slettede data kan ikke fortrydes.",
@@ -377,6 +431,33 @@ const DA = {
 };
 
 const DE = {
+  score: "Gesundheit",
+  grades: {"great": "Sehr gut", "good": "Gut", "fair": "Geht besser", "poor": "Braucht Hilfe"},
+  scoreOf: "{n} von 100",
+  todo: "Das kannst du tun",
+  actEnergy: "{n} falsche Werte in Energie korrigieren",
+  actClean: "Aufräumen und {n} sparen",
+  actRates: "Seltener speichern – {n} pro Monat sparen",
+  actValidation: "Alte Statistik aufräumen",
+  actHealth: "Gesundheitscheck ansehen",
+  allGood: "Alles sieht gut aus",
+  allGoodText: "Keine falschen Werte in Energie und nichts aufzuräumen. Schau in einer Woche wieder vorbei.",
+  statSize: "Größe",
+  statGrowth: "Wächst pro Tag",
+  statDisk: "Speicher voll in",
+  statNever: "nicht bald",
+  w1t: "Willkommen beim Energie-Doktor",
+  w1: "Er findet falsche Werte im Energie-Dashboard und zeigt, was deine Datenbank füllt – und wie sie klein bleibt.",
+  w2t: "Immer sicher",
+  w2: "Er nutzt nur Home Assistants eigene Funktionen, und was genutzt wird, bleibt unberührt.",
+  w3t: "Alles rückgängig machbar",
+  w3: "Korrekturen und Einstellungen lassen sich rückgängig machen, und vor dem Aufräumen kann er ein Backup machen.",
+  next: "Weiter",
+  start: "Los geht's",
+  skip: "Überspringen",
+  help: {"history": "Verlauf sind alle Werte, die Home Assistant speichert, z. B. alle 10 Sekunden. Statistik sind Stundenmittel für lange Grafiken – sie bleibt immer.", "trim": "Werden nur wenige Tage Verlauf behalten, verschwinden die sekundengenauen Details. Grafiken, Energie und Stundenwerte bleiben.", "protect": "„Nie anfassen“ hält eine Entität aus allen Vorschlägen heraus – nützlich, wenn Code außerhalb von Home Assistant (z. B. AppDaemon) ihren Verlauf liest.", "rates": "Zigbee-Geräte können seltener senden. Nur Geräte mit reinen Sensoren werden gebremst, und was genutzt wird, geht nie unter Normal.", "validation": "Home Assistant speichert Statistik für Sensoren. Wird ein Sensor umbenannt oder entfernt, bleibt seine alte Statistik übrig und kann gelöscht werden."},
+  energyAllGood: "In Energie ist alles in Ordnung",
+  snackUndo: "Rückgängig",
   vinfo: "Harmlos: Sie sind absichtlich im Recorder ausgeschlossen. Home Assistant warnt, solange der Sensor eine State-Class hat – es gibt keine alte Statistik mehr zu löschen.",
   keepRule: "So beibehalten – künftig nur {k} Tage behalten (jede Nacht geprüft)",
   keptPill: "Behält {k} Tage",
@@ -512,6 +593,33 @@ const DE = {
 };
 
 const SV = {
+  score: "Hälsa",
+  grades: {"great": "Mycket bra", "good": "Bra", "fair": "Kan bli bättre", "poor": "Behöver hjälp"},
+  scoreOf: "{n} av 100",
+  todo: "Det här kan du göra",
+  actEnergy: "Rätta {n} felaktiga värden i Energi",
+  actClean: "Städa och spara {n}",
+  actRates: "Spara mer sällan – spara {n} per månad",
+  actValidation: "Rensa gammal statistik",
+  actHealth: "Se hälsokontrollen",
+  allGood: "Allt ser bra ut",
+  allGoodText: "Inga felaktiga värden i Energi och inget att städa. Titta in igen om en vecka.",
+  statSize: "Storlek",
+  statGrowth: "Växer per dag",
+  statDisk: "Disken full om",
+  statNever: "inte snart",
+  w1t: "Välkommen till Energidoktorn",
+  w1: "Den hittar felaktiga värden i energipanelen och visar vad som fyller din databas – och hur den hålls liten.",
+  w2t: "Alltid säkert",
+  w2: "Den använder bara Home Assistants egna funktioner, och det som används rörs aldrig.",
+  w3t: "Det kan ångras",
+  w3: "Rättelser och inställningar kan ångras, och före en städning kan den göra en säkerhetskopia.",
+  next: "Nästa",
+  start: "Kom igång",
+  skip: "Hoppa över",
+  help: {"history": "Historik är alla värden Home Assistant sparar, t.ex. var 10:e sekund. Statistik är timmedelvärden som långa grafer använder – den finns alltid kvar.", "trim": "När bara några dagars historik sparas försvinner detaljerna sekund för sekund. Grafer, Energi och timvärden påverkas inte.", "protect": "”Rör aldrig” håller en entitet utanför alla förslag – bra när kod utanför Home Assistant (t.ex. AppDaemon) läser dess historik.", "rates": "Zigbee-enheter kan skicka mer sällan. Bara enheter med enbart sensorer sänks, och det som används går aldrig under Normal.", "validation": "Home Assistant sparar statistik för sensorer. När en sensor byter namn eller tas bort ligger den gamla statistiken kvar och kan rensas."},
+  energyAllGood: "Allt är i ordning i Energi",
+  snackUndo: "Ångra",
   vinfo: "Ofarligt: de är undantagna i recordern med flit. Home Assistant fortsätter varna så länge sensorn har en state class – det finns ingen gammal statistik kvar att ta bort.",
   keepRule: "Behåll så här – de behåller bara {k} dagar framöver (kontrolleras varje natt)",
   keptPill: "Behåller {k} dagar",
@@ -647,6 +755,33 @@ const SV = {
 };
 
 const NL = {
+  score: "Gezondheid",
+  grades: {"great": "Heel goed", "good": "Goed", "fair": "Kan beter", "poor": "Heeft hulp nodig"},
+  scoreOf: "{n} van 100",
+  todo: "Dit kun je doen",
+  actEnergy: "{n} foute waarden in Energie herstellen",
+  actClean: "Opruimen en {n} besparen",
+  actRates: "Minder vaak opslaan – {n} per maand besparen",
+  actValidation: "Oude statistiek opruimen",
+  actHealth: "Bekijk de gezondheidscheck",
+  allGood: "Alles ziet er goed uit",
+  allGoodText: "Geen foute waarden in Energie en niets op te ruimen. Kijk over een week nog eens.",
+  statSize: "Grootte",
+  statGrowth: "Groeit per dag",
+  statDisk: "Schijf vol over",
+  statNever: "niet snel",
+  w1t: "Welkom bij Energiedokter",
+  w1: "Hij vindt foute waarden in het energiedashboard en laat zien wat je database vult – en hoe je hem klein houdt.",
+  w2t: "Altijd veilig",
+  w2: "Hij gebruikt alleen de eigen functies van Home Assistant, en wat gebruikt wordt, blijft onaangeroerd.",
+  w3t: "Het kan ongedaan",
+  w3: "Herstel en instellingen kunnen ongedaan worden gemaakt, en voor het opruimen kan hij een back-up maken.",
+  next: "Volgende",
+  start: "Aan de slag",
+  skip: "Overslaan",
+  help: {"history": "Geschiedenis is elke waarde die Home Assistant opslaat, bijv. elke 10 seconden. Statistiek zijn uurgemiddelden voor lange grafieken – die blijven altijd.", "trim": "Als maar een paar dagen geschiedenis worden bewaard, verdwijnen de details per seconde. Grafieken, Energie en uurwaarden blijven.", "protect": "‘Nooit aanraken’ houdt een entiteit buiten alle voorstellen – handig als code buiten Home Assistant (bijv. AppDaemon) haar geschiedenis leest.", "rates": "Zigbee-apparaten kunnen minder vaak sturen. Alleen apparaten met alleen sensoren worden vertraagd, en wat gebruikt wordt gaat nooit onder Normaal.", "validation": "Home Assistant bewaart statistiek voor sensoren. Wordt een sensor hernoemd of verwijderd, dan blijft de oude statistiek achter en kan worden gewist."},
+  energyAllGood: "Alles is in orde in Energie",
+  snackUndo: "Ongedaan maken",
   vinfo: "Onschuldig: ze zijn bewust uitgesloten in de recorder. Home Assistant blijft waarschuwen zolang de sensor een state class heeft – er is geen oude statistiek meer om te verwijderen.",
   keepRule: "Zo houden – ze bewaren voortaan alleen {k} dagen (elke nacht gecontroleerd)",
   keptPill: "Bewaart {k} dagen",
@@ -814,11 +949,20 @@ class EnergyDoctorPanel extends HTMLElement {
     this.keepRule = true;
     this.message = "";
     this.aiText = "";
+    this.snack = null;
+    this.step = 0;
+    this.animate = true;
+    try {
+      this.welcomed = localStorage.getItem("energy_doctor_welcomed") === "1";
+    } catch (e) {
+      this.welcomed = true;
+    }
   }
 
   set hass(hass) {
     const first = !this._hass;
     this._hass = hass;
+    this.toggleAttribute("dark", !!hass.themes?.darkMode);
     if (first) this.load();
   }
 
@@ -857,9 +1001,12 @@ class EnergyDoctorPanel extends HTMLElement {
     return new Date(ts * 1000).toLocaleString(LOCALE[this.lang], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
   }
 
-  async load(fresh = false) {
-    this.view = "working";
-    this.render();
+  async load(fresh = false, quiet = false) {
+    // quiet: keep showing what is there while the new picture loads (after an action).
+    if (!quiet) {
+      this.view = "working";
+      this.render();
+    }
     try {
       const [data, history, settings] = await Promise.all([this.ws("overview", { fresh, stale: !fresh }), this.ws("history"), this.ws("settings")]);
       this.data = data;
@@ -949,6 +1096,55 @@ class EnergyDoctorPanel extends HTMLElement {
     if (days > 730) return this.t("years", { n: this.num(days / 365, 0) });
     if (days > 60) return this.t("months", { n: this.num(days / 30, 0) });
     return this.t("days", { n: this.num(days, 0) });
+  }
+
+  help(key) {
+    return `<details class="q"><summary aria-label="?">?</summary><div class="tip">${esc(this.t(`help.${key}`))}</div></details>`;
+  }
+
+  validationGroups() {
+    return new Set((this.extra?.validation || []).filter((v) => v.fix !== "info").map((v) => (["no_state", "entity_no_longer_recorded", "entity_not_recorded", "state_class_removed"].includes(v.type) ? v.type : v.id)));
+  }
+
+  score() {
+    // A simple 0-100 health score and up to three things to do, most useful first.
+    const d = this.data;
+    const issues = this.visibleIssues().length;
+    const vgroups = this.validationGroups().size;
+    const warns = (d.health || []).filter((h) => h.level === "warn").length;
+    const save = d.suggestion?.bytes || 0;
+    const rates = this.ratesSaving();
+    let score = 100;
+    score -= Math.min(30, issues * 10);
+    score -= Math.min(10, vgroups * 5);
+    score -= Math.min(24, warns * 8);
+    score -= d.size ? Math.round(Math.min(25, (save / d.size) * 50)) : save > 5e8 ? 10 : 0;
+    if (d.growth > 0 && d.free) score -= d.free / d.growth < 90 ? 15 : d.free / d.growth < 365 ? 5 : 0;
+    score = Math.max(0, score);
+    const todo = [];
+    if (issues) todo.push({ icon: "mdi:lightning-bolt", text: this.t("actEnergy", { n: issues }), act: "tab", tab: "energy", tone: "red" });
+    if (save > 1e7 && !d.cleaning) todo.push({ icon: "mdi:broom", text: this.t("actClean", { n: this.bytes(save) }), act: "clean", tone: "blue" });
+    if (rates > 1e7) todo.push({ icon: "mdi:timer-sand", text: this.t("actRates", { n: this.bytes(rates) }), act: "tab", tab: "settings", tone: "amber" });
+    if (vgroups) todo.push({ icon: "mdi:chart-box-outline", text: this.t("actValidation"), act: "tab", tab: "energy", tone: "amber" });
+    const grade = score >= 90 ? "great" : score >= 75 ? "good" : score >= 50 ? "fair" : "poor";
+    return { score, grade, todo: todo.slice(0, 3) };
+  }
+
+  scoreCard() {
+    const { score, grade, todo } = this.score();
+    const d = this.data;
+    const c = 2 * Math.PI * 30;
+    const tone = { great: "var(--ed-green)", good: "var(--ed-green)", fair: "var(--ed-amber)", poor: "var(--ed-red)" }[grade];
+    const days = d.growth > 0 && d.free ? d.free / d.growth : null;
+    const tile = (icon, label, value) => `<div class="tile"><ha-icon icon="${icon}"></ha-icon><b>${esc(value)}</b><span>${esc(label)}</span></div>`;
+    const list = todo.length
+      ? `<div class="todo"><div class="eyebrow muted">${this.t("todo")}</div>${todo.map((x) => `<button class="tdo" data-act="${x.act}" ${x.tab ? `data-tab="${x.tab}"` : ""}><span class="ticon ${x.tone}"><ha-icon icon="${x.icon}"></ha-icon></span><span class="grow">${esc(x.text)}</span><ha-icon class="chev" icon="mdi:chevron-right"></ha-icon></button>`).join("")}</div>`
+      : `<div class="empty small-empty"><ha-icon icon="mdi:party-popper"></ha-icon><b>${this.t("allGood")}</b><span class="muted small">${this.t("allGoodText")}</span></div>`;
+    return `<div class="card span scorecard">
+      <div class="scorehead"><div class="mini"><svg viewBox="0 0 72 72" aria-hidden="true"><g transform="rotate(-90 36 36)" fill="none" stroke-width="8" stroke-linecap="round"><circle cx="36" cy="36" r="30" stroke="var(--ed-track)"></circle><circle class="arc" cx="36" cy="36" r="30" stroke="${tone}" stroke-dasharray="${(score / 100) * c} ${c}"></circle></g></svg><b>${score}</b></div>
+        <div class="grow"><div class="eyebrow muted">${this.t("score")}</div><div class="grade">${this.t(`grades.${grade}`)}</div><div class="muted small">${this.t("scoreOf", { n: score })}</div></div></div>
+      <div class="tiles">${tile("mdi:database", this.t("statSize"), d.size != null ? this.bytes(d.size) : this.num(d.rows, 0))}${tile("mdi:trending-up", this.t("statGrowth"), d.growth != null ? this.bytes(Math.max(d.growth, 0)) : "–")}${tile("mdi:harddisk", this.t("statDisk"), days == null || days > 3650 ? this.t("statNever") : this.duration(days))}</div>
+      ${list}</div>`;
   }
 
   ratesSaving() {
@@ -1063,7 +1259,7 @@ class EnergyDoctorPanel extends HTMLElement {
   }
 
   overviewTab() {
-    return `${this.ring()}${this.cleaningCard()}${this.aiCard()}${this.suggestionCard()}${this.ratesCard()}${this.graph()}${this.healthCard()}${this.recentCard()}
+    return `${this.scoreCard()}${this.ring()}${this.cleaningCard()}${this.aiCard()}${this.suggestionCard()}${this.ratesCard()}${this.graph()}${this.healthCard()}${this.recentCard()}
       <button class="link center-link" data-act="fresh"><ha-icon icon="mdi:refresh"></ha-icon> ${this.t("fresh")}</button>`;
   }
 
@@ -1096,6 +1292,9 @@ class EnergyDoctorPanel extends HTMLElement {
           <p class="muted small">${this.t("energyIntro")}</p>${issues.map(row).join("")}
           <button class="primary" data-act="fixPicked" ${this.picked.size ? "" : "disabled"}>${this.t("fixN", { n: this.picked.size })}</button></div>`
       : `<div class="card okcard"><ha-icon icon="mdi:lightning-bolt-circle"></ha-icon><span>${this.t("noErrors")}</span></div>`;
+    if (!issues.length && this.extra && !this.validationGroups().size && !(this.extra.unaccounted?.candidates || []).length) {
+      return `<div class="card span empty"><ha-icon icon="mdi:lightning-bolt-circle"></ha-icon><b>${this.t("energyAllGood")}</b><span class="muted">${this.t("noErrors")}</span></div>${this.validationCard()}${this.unaccountedCard()}`;
+    }
     return `${errors}${this.validationCard()}${this.unaccountedCard()}`;
   }
 
@@ -1127,7 +1326,7 @@ class EnergyDoctorPanel extends HTMLElement {
         : `<button class="soft ${v.fix === "clear" ? "redbg" : ""}" data-act="fixValidation" data-id="${esc(v.id)}">${esc(this.t(`vfix.${v.fix}`, { to: v.data.state_unit || "" }))}</button>`;
       return `<div class="irow"><div class="grow"><div class="name">${esc(v.name)}</div><div class="small muted">${esc(text)}</div><div class="mono small muted">${esc(v.statistic_id)}</div></div>${action}</div>`;
     };
-    return `<div class="card"><div class="head"><i class="dot" style="background:#f59e0b"></i><b>${this.t("validation")}</b><span class="muted small right">${this.t("found", { n: list.length })}</span></div>
+    return `<div class="card"><div class="head"><i class="dot" style="background:#f59e0b"></i><b>${this.t("validation")}</b>${this.help("validation")}<span class="muted small right">${this.t("found", { n: list.length })}</span></div>
       ${groups.map(group).join("")}${single.map(row).join("")}<p class="muted small">${this.t("clearWarn")}</p></div>`;
   }
 
@@ -1197,7 +1396,7 @@ class EnergyDoctorPanel extends HTMLElement {
         <div class="line"><span>${esc(e.name)}</span><span class="nowrap muted">${this.bytes(e.bytes)}</span></div>
         <div class="mono small muted">${esc(e.entity_id)} · ${esc(this.t("rows", { n: this.num(e.rows, 0), d: this.num(e.per_day, 0) }))}</div>
         ${e.used_in.length ? `<div class="chips">${e.used_in.slice(0, 8).map((u) => `<span class="chip ${u.history ? "hist" : ""}"><ha-icon icon="${USE_ICON[u.kind] || "mdi:link"}"></ha-icon>${esc(u.kind === "energy" ? this.t("groups.energy") : u.name)}${u.history ? ` · ${this.t("historyTag")}` : ""}</span>`).join("")}</div>` : `<div class="small muted">${this.t("unused")}</div>`}
-        <div class="row wrap">${!e.deleted ? `<button class="link small" data-act="protect" data-id="${esc(e.entity_id)}">${e.protected ? this.t("protectOff") : this.t("protectOn")}</button>` : ""}
+        <div class="row wrap">${!e.deleted ? `<button class="link small" data-act="protect" data-id="${esc(e.entity_id)}">${e.protected ? this.t("protectOff") : this.t("protectOn")}</button>${this.help("protect")}` : ""}
         ${e.keep_days ? `<button class="link small" data-act="unkeep" data-id="${esc(e.entity_id)}">${this.t("unkeep")}</button>` : ""}</div>
       </div>`).join("") : "";
     return `<div class="erow">
@@ -1221,7 +1420,7 @@ class EnergyDoctorPanel extends HTMLElement {
     const chips = ["all", "clean", "used", "deleted"].map((f) => `<button class="fchip ${this.filter === f ? "on" : ""}" data-act="filter" data-filter="${f}">${this.t(`filters.${f}`)} <span>${all.filter((r) => inFilter(r, f)).length}</span></button>`).join("");
     const u = this.data.usage || {};
     const unseen = (u.unseen_addons || []).length ? `<div class="card warncard"><ha-icon icon="mdi:eye-off-outline"></ha-icon><div class="grow small">${esc(this.t("unseen", { list: u.unseen_addons.join(", ") }))}</div></div>` : "";
-    return `${unseen}<div class="card"><h2>${this.t("dataTitle")}</h2>
+    return `${unseen}<div class="card span"><div class="head"><h2>${this.t("dataTitle")}</h2>${this.help("history")}</div>
         ${(u.outside_read || []).length ? `<div class="small muted">${esc(this.t("outsideRead", { list: u.outside_read.join(", ") }))}</div>` : ""}
         <div class="fchips">${chips}</div>
         <input id="q" class="search" type="search" placeholder="${this.t("search")}" value="${esc(this.query)}" aria-label="${this.t("search")}">
@@ -1256,7 +1455,7 @@ class EnergyDoctorPanel extends HTMLElement {
     const sig = r.signals;
     const profile = Object.entries(r.profiles).find(([, lv]) => Object.entries(lv).every(([k, v]) => this.choice[k] === v))?.[0];
     const skipped = r.skipped || [];
-    return `<div class="card"><h2>${this.t("ratesTitle")}</h2><p class="muted small">${this.t("ratesIntro")}</p>
+    return `<div class="card"><div class="head"><h2>${this.t("ratesTitle")}</h2>${this.help("rates")}</div><p class="muted small">${this.t("ratesIntro")}</p>
         <b>${this.t("profile")}</b><div class="profiles">${Object.keys(r.profiles).map((p) => `<button class="${profile === p ? "on" : ""}" data-act="profile" data-profile="${p}">${this.t(`profiles.${p}`)}</button>`).join("")}</div></div>
       ${r.groups.map(group).join("")}
       ${sig.count ? `<div class="card"><div class="head"><span class="gicon signals"><ha-icon icon="mdi:signal"></ha-icon></span><div class="grow"><b>${this.t("signals")}</b>
@@ -1274,7 +1473,7 @@ class EnergyDoctorPanel extends HTMLElement {
     const exclude = s.exclude || [];
     const yaml = `recorder:\n  exclude:\n    entities:\n${exclude.map((e) => `      - ${e}`).join("\n")}`;
     return `${this.ratesSection()}
-      <div class="card"><h2>${this.t("retention")}</h2><p class="muted small">${this.t("retentionIntro")}</p>${groups.map(keep).join("")}</div>
+      <div class="card"><div class="head"><h2>${this.t("retention")}</h2>${this.help("trim")}</div><p class="muted small">${this.t("retentionIntro")}</p>${groups.map(keep).join("")}</div>
       <div class="card"><h2>${this.t("notifications")}</h2>${toggle("auto_new", this.t("autoNew"))}${toggle("notify_energy", this.t("notifyEnergy"))}${toggle("weekly_report", this.t("weekly"))}</div>
       <div class="card"><h2>${this.t("stopList")}</h2>
         ${exclude.length ? `<p class="muted small">${this.t("stopListIntro")}</p><pre>${esc(yaml)}</pre>
@@ -1320,6 +1519,15 @@ class EnergyDoctorPanel extends HTMLElement {
         <button class="primary" data-act="cleanDo">${s.bytes ? this.t("cleanDo", { n: this.bytes(s.bytes) }) : this.t("cleanup")}</button></div>`;
   }
 
+  welcomeView() {
+    const steps = [["mdi:stethoscope", "w1t", "w1"], ["mdi:shield-check", "w2t", "w2"], ["mdi:undo-variant", "w3t", "w3"]];
+    const [icon, title, text] = steps[this.step];
+    return `<div class="card welcome"><div class="wicon"><ha-icon icon="${icon}"></ha-icon></div><h2>${this.t(title)}</h2><p class="lead">${this.t(text)}</p>
+        <div class="dots">${steps.map((_, i) => `<i class="${i === this.step ? "on" : ""}"></i>`).join("")}</div></div>
+      <div class="actions"><button class="ghost" data-act="welcomeDone">${this.t("skip")}</button>
+        <button class="primary" data-act="${this.step < 2 ? "welcomeNext" : "welcomeDone"}">${this.t(this.step < 2 ? "next" : "start")}</button></div>`;
+  }
+
   doneView() {
     return `<div class="card done"><ha-icon icon="mdi:check-circle"></ha-icon><h2>${esc(this.doneTitle)}</h2>${this.doneText ? `<p class="muted">${esc(this.doneText)}</p>` : ""}</div>
       <div class="actions">${this.doneUndo ? `<button class="ghost" data-act="undo" data-id="${this.doneUndo}">${this.t("undo")}</button>` : ""}<button class="primary" data-act="fresh">${this.t("home")}</button></div>`;
@@ -1333,21 +1541,24 @@ class EnergyDoctorPanel extends HTMLElement {
   render() {
     const tabs = this.view === "tabs";
     let body;
-    if (this.view === "working") body = this.workingView();
+    if (this.data && !this.welcomed && this.view === "tabs") body = this.welcomeView();
+    else if (this.view === "working") body = this.workingView();
     else if (this.view === "clean") body = this.cleanView();
     else if (this.view === "done") body = this.doneView();
     else if (!this.data) body = `<div class="card"><p class="red">${esc(this.message)}</p><button class="primary" data-act="fresh">${this.t("fresh")}</button></div>`;
     else body = `${this.message ? `<div class="card"><p class="red">${esc(this.message)}</p></div>` : ""}${{ overview: () => this.overviewTab(), energy: () => this.energyTab(), data: () => this.dataTab(), settings: () => this.settingsTab() }[this.tab]()}`;
     // The badge counts things to look at: each wrong hour, and each group of statistics warnings.
-    const vtypes = new Set((this.extra?.validation || []).filter((v) => v.fix !== "info").map((v) => (["no_state", "entity_no_longer_recorded", "entity_not_recorded", "state_class_removed"].includes(v.type) ? v.type : v.id)));
+    const vtypes = this.validationGroups();
     const issues = this.data ? this.visibleIssues().length + vtypes.size : 0;
-    const tabBar = tabs && this.data ? `<nav class="tabs" role="tablist">${["overview", "energy", "data", "settings"].map((t) => `<button role="tab" aria-selected="${this.tab === t}" class="${this.tab === t ? "on" : ""}" data-act="tab" data-tab="${t}">${this.t(`tabs.${t}`)}${t === "energy" && issues ? `<span class="badge">${issues}</span>` : ""}</button>`).join("")}</nav>` : "";
+    const tabBar = tabs && this.data && this.welcomed ? `<nav class="tabs" role="tablist">${["overview", "energy", "data", "settings"].map((t) => `<button role="tab" aria-selected="${this.tab === t}" class="${this.tab === t ? "on" : ""}" data-act="tab" data-tab="${t}">${this.t(`tabs.${t}`)}${t === "energy" && issues ? `<span class="badge">${issues}</span>` : ""}</button>`).join("")}</nav>` : "";
     const y = this.scrollTop;
     this.shadowRoot.innerHTML = `<style>${STYLE}</style>
       <div class="top"><div class="toolbar">${customElements.get("ha-menu-button") ? "<ha-menu-button></ha-menu-button>" : ""}
         ${["clean", "done"].includes(this.view) ? `<button class="tb-back" data-act="tabs" aria-label="${this.t("back")}"><ha-icon icon="mdi:arrow-left"></ha-icon></button>` : ""}
         <div class="tb-title">${this.t("title")}</div></div>${tabBar}</div>
-      <div class="page">${body}</div>`;
+      <div class="page ${tabs && this.data && this.welcomed && ["overview", "energy"].includes(this.tab) ? "cols" : ""} ${this.animate && this.data ? "anim" : ""}">${body}</div>
+      ${this.snack ? `<div class="snack" role="status"><span class="grow">${esc(this.snack.text)}</span>${this.snack.undo ? `<button class="snackbtn" data-act="undo" data-id="${this.snack.undo}">${this.t("snackUndo")}</button>` : ""}<button class="snackx" data-act="snackClose" aria-label="×"><ha-icon icon="mdi:close"></ha-icon></button></div>` : ""}`;
+    if (this.data && this.view === "tabs") this.animate = false;
     this.scrollTop = y;
     const menu = this.shadowRoot.querySelector("ha-menu-button");
     if (menu) {
@@ -1409,17 +1620,29 @@ class EnergyDoctorPanel extends HTMLElement {
     const reset = () => (this.workingText = null);
     try {
       const r = await job();
-      this.doneTitle = typeof title === "function" ? title(r) : title;
-      this.doneText = text;
-      this.doneUndo = r?.undoable ? r.id : null;
-      this.view = "done";
+      // Stay where you were, with a short message and Undo at the bottom.
+      const t = typeof title === "function" ? title(r) : title;
+      this.showSnack(text ? `${t} – ${text}` : t, r?.undoable ? r.id : null);
+      this.view = "tabs";
       reset();
+      this.render();
+      await this.load(true, true);
+      return;
     } catch (e) {
       this.message = this.t("error", { e: e.message || e });
       this.view = "tabs";
       reset();
     }
     this.render();
+  }
+
+  showSnack(text, undo = null) {
+    clearTimeout(this._snackTimer);
+    this.snack = { text, undo };
+    this._snackTimer = setTimeout(() => {
+      this.snack = null;
+      this.render();
+    }, undo ? 10000 : 6000);
   }
 
   rowByKey(key) {
@@ -1429,6 +1652,24 @@ class EnergyDoctorPanel extends HTMLElement {
   act(d) {
     const a = d.act;
     this.toast = "";
+    if (a === "welcomeNext") {
+      this.step += 1;
+      return this.render();
+    }
+    if (a === "welcomeDone") {
+      this.welcomed = true;
+      try {
+        localStorage.setItem("energy_doctor_welcomed", "1");
+      } catch (e) {
+        /* private window: shown again next time */
+      }
+      this.animate = true;
+      return this.render();
+    }
+    if (a === "snackClose") {
+      this.snack = null;
+      return this.render();
+    }
     if (a === "tab") {
       this.tab = d.tab;
       this.view = "tabs";
@@ -1573,6 +1814,8 @@ class EnergyDoctorPanel extends HTMLElement {
 }
 
 const STYLE = `
+:host{--ed-green:#22a06b;--ed-amber:#f59e0b;--ed-red:#d92d20;--ed-track:var(--divider-color,#e8ecf1);--ed-green-bg:#e7f6ee;--ed-green-fg:#22663f;--ed-amber-bg:#fef0c7;--ed-amber-fg:#93370d;--ed-blue-bg:#e6f2f9;--ed-blue-fg:#0b4f75;--ed-grey-bg:#eef1f4;--ed-grey-fg:#475467;--ed-red-bg:#fde8e7;--ed-red-fg:#b42318;--ed-warn-bg:#fffaeb;--ed-purple-bg:#f1ecfe;--ed-purple-fg:#6d3fdb}
+:host([dark]){--ed-green-bg:rgba(34,160,107,.18);--ed-green-fg:#6fd6a4;--ed-amber-bg:rgba(245,158,11,.18);--ed-amber-fg:#fcc463;--ed-blue-bg:rgba(56,152,214,.2);--ed-blue-fg:#8cc8ee;--ed-grey-bg:rgba(255,255,255,.08);--ed-grey-fg:#c3cad4;--ed-red-bg:rgba(217,45,32,.2);--ed-red-fg:#ff9a91;--ed-warn-bg:rgba(245,158,11,.12);--ed-purple-bg:rgba(139,92,246,.2);--ed-purple-fg:#c4b0fb}
 :host{display:block;height:100vh;overflow-y:auto;background:var(--primary-background-color,#f2f4f7);color:var(--primary-text-color,#1c2430);font-family:var(--paper-font-body1_-_font-family,Roboto,system-ui,sans-serif)}
 .top{position:sticky;top:0;z-index:3}
 .toolbar{height:56px;display:flex;align-items:center;gap:4px;padding:0 8px;background:var(--app-header-background-color,var(--primary-color,#03a9f4));color:var(--app-header-text-color,#fff)}
@@ -1586,7 +1829,7 @@ const STYLE = `
 .card{background:var(--card-background-color,#fff);border-radius:var(--ha-card-border-radius,16px);padding:18px;box-shadow:var(--ha-card-box-shadow,0 1px 3px rgba(16,24,40,.08));display:flex;flex-direction:column;gap:10px}
 h2{margin:0;font-size:20px;font-weight:500}
 .muted{color:var(--secondary-text-color,#5b6676)}.small{font-size:13px}.mono{font-family:ui-monospace,monospace;overflow-wrap:anywhere}
-.red{color:var(--error-color,#b42318)}.amber{color:#b54708}.green{color:var(--success-color,#22663f)}
+.red{color:var(--error-color,#b42318)}.amber{color:var(--ed-amber-fg)}.green{color:var(--success-color,#22663f)}
 .ringcard{align-items:center;text-align:center}
 .ring{position:relative;width:196px;height:196px}.ring svg{width:196px;height:196px}
 .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
@@ -1594,19 +1837,19 @@ h2{margin:0;font-size:20px;font-weight:500}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:13px}.legend.left{justify-content:flex-start}
 .leg{display:flex;align-items:center;gap:6px}.leg i{width:10px;height:10px;border-radius:5px;display:inline-block}
 .lead{margin:0;font-size:15px;line-height:1.45}.lead.left{text-align:left}
-.graph{width:100%;height:auto}.gl{font-size:12px;font-weight:500}.gl.red{fill:#b42318}.gl.green{fill:#22663f}
+.graph{width:100%;height:auto}.gl{font-size:12px;font-weight:500}.gl.red{fill:var(--ed-red-fg)}.gl.green{fill:var(--ed-green-fg)}
 .hero{background:var(--primary-color,#0b6fa4);color:var(--text-primary-color,#fff)}
 .hero .eyebrow{font-size:13px;font-weight:500;letter-spacing:.4px;text-transform:uppercase;opacity:.85}
 .hero .big{font-size:26px;font-weight:700}
 .row{display:flex;gap:10px}
 button{font-family:inherit;cursor:pointer}
-.white{flex:1;height:48px;border-radius:12px;border:0;background:#fff;color:var(--primary-color,#0b6fa4);font-size:16px;font-weight:500}
+.white{flex:1;height:48px;border-radius:12px;border:0;background:var(--card-background-color,#fff);color:var(--primary-color,#0b6fa4);font-size:16px;font-weight:500}
 .primary{flex:1;min-height:52px;border-radius:14px;border:0;background:var(--primary-color,#0b6fa4);color:var(--text-primary-color,#fff);font-size:16px;font-weight:500;padding:0 18px}
 .primary:disabled{opacity:.45;cursor:default}
 .ghost{min-height:52px;padding:0 18px;border-radius:14px;border:1px solid var(--divider-color,#c4ccd6);background:var(--card-background-color,#fff);color:var(--primary-color,#0b6fa4);font-size:15px;font-weight:500}
 .soft{min-height:40px;min-width:64px;padding:0 14px;border-radius:10px;border:0;background:var(--secondary-background-color,#eef1f4);color:var(--primary-text-color);font-size:14px;font-weight:500;flex:none}
 .linkbtn{display:inline-flex;align-items:center;text-decoration:none}
-.redbg{background:#fde8e7;color:#b42318}
+.redbg{background:var(--ed-red-bg);color:var(--ed-red-fg)}
 .link{background:none;border:0;color:var(--primary-color,#0b6fa4);font-size:14px;padding:8px 0;text-align:left;display:inline-flex;align-items:center;gap:4px;align-self:flex-start}
 .center-link{align-self:center}
 .head{display:flex;align-items:center;gap:10px}.head b{font-size:17px;font-weight:500}.right{margin-left:auto}
@@ -1626,10 +1869,10 @@ button{font-family:inherit;cursor:pointer}
 .bar.big,.bar.big>div{height:10px;border-radius:5px}
 .meta{display:flex;align-items:center;gap:8px}.chev{margin-left:auto;--mdc-icon-size:20px;color:var(--secondary-text-color)}
 .pill{font-size:12px;font-weight:500;border-radius:12px;padding:3px 10px}
-.pill.green{background:#e7f6ee;color:#22663f}.pill.amber{background:#fef0c7;color:#93370d}.pill.blue{background:#e6f2f9;color:#0b4f75}.pill.grey{background:#eef1f4;color:#475467}
-.rowact{display:flex;justify-content:flex-end}
+.pill.green{background:var(--ed-green-bg);color:var(--ed-green-fg)}.pill.amber{background:var(--ed-amber-bg);color:var(--ed-amber-fg)}.pill.blue{background:var(--ed-blue-bg);color:var(--ed-blue-fg)}.pill.grey{background:var(--ed-grey-bg);color:var(--ed-grey-fg)}
+.rowact{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px}
 .sub{margin:8px 0 0 12px;padding:8px 0 8px 12px;border-left:3px solid var(--divider-color,#e8ecf1);display:flex;flex-direction:column;gap:4px}
-.chip.hist{background:#e6f2f9;color:#0b4f75}
+.chip.hist{background:var(--ed-blue-bg);color:var(--ed-blue-fg)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}.chip{display:inline-flex;align-items:center;gap:4px;background:var(--secondary-background-color,#eef1f4);border-radius:14px;padding:4px 10px 4px 6px;font-size:12px}.chip ha-icon{--mdc-icon-size:16px}
 .fchips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
 .fchip{flex:none;min-height:36px;border-radius:18px;border:1px solid var(--divider-color,#d6dce4);background:var(--card-background-color,#fff);color:var(--primary-text-color);font-size:14px;padding:0 14px}
@@ -1637,7 +1880,7 @@ button{font-family:inherit;cursor:pointer}
 .search{height:44px;border-radius:12px;border:1px solid var(--divider-color,#d6dce4);padding:0 14px;font-size:15px;background:var(--card-background-color,#fff);color:var(--primary-text-color);font-family:inherit}
 pre{margin:0;padding:12px;border-radius:10px;background:var(--secondary-background-color,#eef1f4);font-size:12px;overflow-x:auto}
 .okcard{flex-direction:row;align-items:center;gap:12px;color:var(--success-color,#22663f)}
-.warncard{flex-direction:row;gap:12px;background:#fffaeb;color:#93370d}.warncard a{color:#93370d;font-weight:500}
+.warncard{flex-direction:row;gap:12px;background:var(--ed-warn-bg);color:var(--ed-amber-fg)}.warncard a{color:var(--ed-amber-fg);font-weight:500}
 .actions{display:flex;gap:10px;position:sticky;bottom:12px}
 .pick{cursor:pointer}.pick input{position:absolute;opacity:0}
 .box{width:22px;height:22px;flex:none;border-radius:6px;border:2px solid var(--secondary-text-color,#8a94a3);box-sizing:border-box}
@@ -1651,7 +1894,7 @@ pre{margin:0;padding:12px;border-radius:10px;background:var(--secondary-backgrou
 .profiles button{min-height:52px;border-radius:12px;border:1px solid var(--divider-color,#d6dce4);background:var(--card-background-color,#fff);color:var(--primary-text-color);font-size:15px}
 .profiles button.on{border:2px solid var(--primary-color,#0b6fa4);background:rgba(11,111,164,.08);color:var(--primary-color,#0b6fa4);font-weight:500}
 .gicon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:none}
-.gicon.climate{background:#e6f2f9;color:#0b6fa4}.gicon.meters{background:#fef3e2;color:#b54708}.gicon.sensors{background:#e7f6ee;color:#22663f}.gicon.signals{background:#f1ecfe;color:#6d3fdb}
+.gicon.climate{background:var(--ed-blue-bg);color:var(--ed-blue-fg)}.gicon.meters{background:var(--ed-amber-bg);color:var(--ed-amber-fg)}.gicon.sensors{background:var(--ed-green-bg);color:var(--ed-green-fg)}.gicon.signals{background:var(--ed-purple-bg);color:var(--ed-purple-fg)}
 .drow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--divider-color,#eef1f4)}
 select{height:40px;border-radius:10px;border:1px solid var(--divider-color,#d6dce4);background:var(--card-background-color,#fff);color:var(--primary-text-color);font-family:inherit;font-size:14px;padding:0 8px;max-width:50%}
 .trow{display:flex;align-items:center;gap:12px;min-height:48px;cursor:pointer;border-top:1px solid var(--divider-color,#eef1f4)}
@@ -1668,6 +1911,36 @@ select{height:40px;border-radius:10px;border:1px solid var(--divider-color,#d6dc
 .small-spin{width:24px;height:24px;border-width:3px;align-self:center}
 .spinner.tiny{display:inline-block;width:12px;height:12px;border-width:2px;vertical-align:-2px}
 @keyframes spin{to{transform:rotate(360deg)}}
+.eyebrow{font-size:12px;font-weight:500;letter-spacing:.5px;text-transform:uppercase}
+.scorehead{display:flex;align-items:center;gap:16px}
+.mini{position:relative;width:72px;height:72px;flex:none}.mini svg{width:72px;height:72px}.mini b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700}
+.grade{font-size:22px;font-weight:600}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tile{background:var(--secondary-background-color,#eef1f4);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile ha-icon{--mdc-icon-size:20px;color:var(--primary-color,#0b6fa4)}.tile b{font-size:16px;font-weight:600;line-height:1.2;overflow-wrap:anywhere}.tile span{font-size:12px;color:var(--secondary-text-color)}
+.todo{display:flex;flex-direction:column;gap:4px}
+.tdo{all:unset;display:flex;align-items:center;gap:12px;min-height:52px;padding:4px 6px;border-radius:12px;cursor:pointer;font-size:15px;box-sizing:border-box}
+.tdo:hover{background:var(--secondary-background-color,#eef1f4)}.tdo:focus-visible{outline:2px solid var(--primary-color)}
+.ticon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none}.ticon ha-icon{--mdc-icon-size:20px}
+.ticon.red{background:var(--ed-red-bg);color:var(--ed-red-fg)}.ticon.amber{background:var(--ed-amber-bg);color:var(--ed-amber-fg)}.ticon.blue{background:var(--ed-blue-bg);color:var(--ed-blue-fg)}
+.empty{align-items:center;text-align:center;gap:6px;padding:32px 18px}.empty ha-icon{--mdc-icon-size:48px;color:var(--ed-green)}.empty b{font-size:18px;font-weight:600}
+.small-empty{padding:12px 0 4px}.small-empty ha-icon{--mdc-icon-size:36px}
+.q{position:relative;display:inline-block}.q summary{list-style:none;width:22px;height:22px;border-radius:50%;background:var(--secondary-background-color,#eef1f4);color:var(--secondary-text-color);font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.q summary::-webkit-details-marker{display:none}.q[open] summary{background:var(--primary-color,#0b6fa4);color:#fff}
+.tip{position:absolute;z-index:4;top:28px;left:-120px;width:260px;max-width:78vw;padding:12px 14px;border-radius:12px;background:var(--card-background-color,#fff);color:var(--primary-text-color);box-shadow:0 8px 24px rgba(16,24,40,.18);font-size:13px;line-height:1.45;font-weight:400;text-transform:none;letter-spacing:0}
+.welcome{align-items:center;text-align:center;padding:36px 22px;gap:14px}
+.wicon{width:84px;height:84px;border-radius:26px;background:var(--ed-blue-bg);color:var(--ed-blue-fg);display:flex;align-items:center;justify-content:center}.wicon ha-icon{--mdc-icon-size:44px}
+.dots{display:flex;gap:6px}.dots i{width:8px;height:8px;border-radius:4px;background:var(--divider-color,#d6dce4);transition:width .2s}.dots i.on{width:22px;background:var(--primary-color,#0b6fa4)}
+.snack{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:6;width:min(560px,calc(100% - 32px));box-sizing:border-box;display:flex;align-items:center;gap:8px;padding:8px 8px 8px 16px;border-radius:12px;background:#1f2937;color:#fff;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.25);animation:rise .2s ease-out}
+.snackbtn{background:none;border:0;color:#8cc8ee;font-size:14px;font-weight:600;min-height:40px;padding:0 10px}.snackx{background:none;border:0;color:#cbd5e1;width:40px;height:40px;border-radius:50%}
+.bar>span,.bar>div{transition:width .6s ease}
+@media (min-width:1000px){.page.cols{max-width:1120px;display:block;column-count:2;column-gap:16px}.page.cols>*{break-inside:avoid;margin-bottom:16px;width:100%;box-sizing:border-box}.page.cols>.span{column-span:all}.page.cols>.center-link{display:flex;margin:0 auto}}
+@keyframes rise{from{opacity:0;transform:translate(var(--tx,0),8px)}to{opacity:1;transform:translate(var(--tx,0),0)}}
+@keyframes draw{from{stroke-dasharray:0 999}}
+.page.anim>.card{animation:rise .3s ease-out both}.page.anim>.card:nth-child(2){animation-delay:.04s}.page.anim>.card:nth-child(3){animation-delay:.08s}.page.anim>.card:nth-child(n+4){animation-delay:.12s}
+.page.anim .ring circle+circle,.page.anim .arc{animation:draw .8s ease-out both}
+.snack{--tx:-50%}
+@media (prefers-reduced-motion:reduce){.page.anim>.card,.snack,.page.anim .ring circle,.page.anim .arc{animation:none}.bar>span,.bar>div{transition:none}}
 .done{align-items:center;text-align:center}.done ha-icon{--mdc-icon-size:56px;color:var(--success-color,#22a06b)}
 `;
 
