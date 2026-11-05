@@ -1,6 +1,7 @@
 // Energy Doctor panel: tabs Overview · Energy · Data · Settings.
 
 const EN = {
+  provisional: "First estimate from the first hours – it gets more precise after a couple of days.",
   title: "Energy Doctor",
   tabs: { overview: "Overview", energy: "Energy", data: "Data", settings: "Settings" },
   working: "Looking through the database …",
@@ -137,6 +138,7 @@ const EN = {
 };
 
 const DA = {
+  provisional: "Første skøn ud fra de første timer – det bliver mere præcist efter et par dage.",
   title: "Energi-doktor",
   tabs: { overview: "Overblik", energy: "Energi", data: "Data", settings: "Indstillinger" },
   working: "Kigger databasen igennem …",
@@ -273,6 +275,7 @@ const DA = {
 };
 
 const DE = {
+  provisional: "Erste Schätzung aus den ersten Stunden – nach ein paar Tagen wird sie genauer.",
   title: "Energie-Doktor",
   tabs: { overview: "Übersicht", energy: "Energie", data: "Daten", settings: "Einstellungen" },
   working: "Die Datenbank wird durchgesehen …", workingHint: "Eine große Datenbank dauert eine Minute.",
@@ -356,6 +359,7 @@ const DE = {
 };
 
 const SV = {
+  provisional: "Första uppskattning från de första timmarna – den blir mer exakt efter ett par dagar.",
   title: "Energidoktorn",
   tabs: { overview: "Översikt", energy: "Energi", data: "Data", settings: "Inställningar" },
   working: "Går igenom databasen …", workingHint: "En stor databas tar en minut.",
@@ -439,6 +443,7 @@ const SV = {
 };
 
 const NL = {
+  provisional: "Eerste schatting uit de eerste uren – na een paar dagen wordt die nauwkeuriger.",
   title: "Energiedokter",
   tabs: { overview: "Overzicht", energy: "Energie", data: "Data", settings: "Instellingen" },
   working: "De database wordt doorgekeken …", workingHint: "Een grote database duurt een minuut.",
@@ -662,7 +667,9 @@ class EnergyDoctorPanel extends HTMLElement {
 
   graph() {
     const d = this.data;
-    const pts = (d.sizes || []).map(([day, size]) => [new Date(`${day}T12:00:00`).getTime() / 86400000, size]);
+    // Days once there are a few; before that the hourly samples, so the graph starts at once.
+    const daily = (d.sizes || []).map(([day, size]) => [new Date(`${day}T12:00:00`).getTime() / 86400000, size]);
+    const pts = daily.length >= 3 ? daily : (d.samples || []).map(([ts, size]) => [ts / 86400, size]);
     if (pts.length < 2 || d.growth == null) return `<div class="card"><div class="head"><b>${this.t("graphTitle")}</b></div><p class="muted small">${this.t("graphFew")}</p></div>`;
     const last = pts[pts.length - 1];
     const ahead = 90;
@@ -684,6 +691,7 @@ class EnergyDoctorPanel extends HTMLElement {
         <text x="${x(asIs[0]) - 4}" y="${y(asIs[1]) - 6}" text-anchor="end" class="gl red">${this.bytes(asIs[1])}</text>
         <text x="${x(opt[0]) - 4}" y="${y(opt[1]) + 16}" text-anchor="end" class="gl green">${this.bytes(opt[1])}</text>
       </svg>
+      ${d.provisional ? `<p class="muted small">${this.t("provisional")}</p>` : ""}
       <div class="legend left"><span class="leg"><i style="background:var(--primary-color,#0b6fa4)"></i>${this.t("graphNow")}</span><span class="leg"><i style="background:#d92d20"></i>${this.t("graphAsIs")}</span><span class="leg"><i style="background:#22a06b"></i>${this.t("graphOptimised")}</span></div>
     </div>`;
   }

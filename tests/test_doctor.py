@@ -225,3 +225,13 @@ async def test_settings_retention_health_energy_devices_and_history(recorder_moc
     assert doctor.history_view()[0]["kind"] == "energy_devices"
     assert await doctor.async_undo(result["id"])
     assert not manager.data["device_consumption"]
+
+
+async def test_growth_starts_from_hourly_samples(recorder_mock, hass: HomeAssistant, doctor) -> None:
+    """Before two days are measured, the growth comes from the hourly samples (and is marked provisional)."""
+    doctor.sizes, doctor.samples = {}, [[1000.0, 1_000_000_000], [1000.0 + 7200, 1_010_000_000]]
+    assert doctor.growth() == pytest.approx(120_000_000)
+    doctor.samples = [[1000.0, 1_000_000_000]]
+    assert doctor.growth() is None
+    doctor.sizes = {"2026-11-01": 1_000_000_000, "2026-11-03": 1_100_000_000}
+    assert doctor.growth() == pytest.approx(50_000_000)

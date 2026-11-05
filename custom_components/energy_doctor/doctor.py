@@ -38,7 +38,8 @@ class Doctor:
         self.hass = hass
         self.store: Store[dict[str, Any]] = Store(hass, 1, f"{DOMAIN}.history")
         self.history: list[dict[str, Any]] = []
-        self.sizes: dict[str, int] = {}  # date -> database size, for the growth
+        self.sizes: dict[str, int] = {}  # date -> database size, for the growth over days
+        self.samples: list[list[float]] = []  # [time, size] every hour for the last week, so the graph starts at once
         self.seen: list[str] = []  # energy issues the user has already been told about
         self.levels: dict[str, str] = {}  # the levels the user chose per group; new devices get them too
         self.settings: dict[str, Any] = dict(DEFAULT_SETTINGS)
@@ -53,6 +54,7 @@ class Doctor:
         cutoff = time.time() - KEEP_DAYS * 86400
         self.history = [h for h in data.get("history", []) if h["at"] >= cutoff]
         self.sizes = data.get("sizes", {})
+        self.samples = data.get("samples", [])
         self.seen = data.get("seen", [])
         self.levels = data.get("levels", {})
         self.settings = DEFAULT_SETTINGS | data.get("settings", {})
@@ -60,7 +62,7 @@ class Doctor:
             async_track_time_change(self.hass, self._async_nightly, hour=3, minute=30, second=0),
             async_track_time_change(self.hass, self._async_weekly, hour=9, minute=0, second=0),
             self.hass.bus.async_listen(dr.EVENT_DEVICE_REGISTRY_UPDATED, self._device_added),
-            async_track_time_interval(self.hass, self._async_note_size, timedelta(hours=6)),
+            async_track_time_interval(self.hass, self._async_note_size, timedelta(hours=1)),
             async_track_time_interval(self.hass, self._async_watch, timedelta(hours=12)),
         ]
         self.hass.async_create_task(self._async_note_size())
@@ -70,7 +72,7 @@ class Doctor:
             unsub()
 
     def _save(self) -> None:
-        self.store.async_delay_save(lambda: {"history": self.history, "sizes": self.sizes, "seen": self.seen[-500:], "levels": self.levels, "settings": self.settings}, 1)
+        self.store.async_delay_save(lambda: {"history": self.history, "sizes": self.sizes, "samples": self.samples, "seen": self.seen[-500:], "levels": self.levels, "settings": self.settings}, 1)
 
     @callback
     def _device_added(self, event: Event) -> None:
@@ -158,14 +160,18 @@ class Doctor:
             return
         size = await self.hass.async_add_executor_job(analysis._file_size, url.removeprefix(analysis.SQLITE))
         if size:
+            now = time.time()
             self.sizes[time.strftime("%Y-%m-%d")] = size
             self.sizes = dict(sorted(self.sizes.items())[-60:])
+            self.samples = [s for s in self.samples if s[0] > now - 7 * 86400] + [[now, size]]
             self._save()
 
     def growth(self) -> float | None:
-        """Bytes a day over the last week (or as far back as known)."""
+        """Bytes a day over the last week; the first days from the hourly samples (provisional)."""
         days = sorted(self.sizes.items())
         if len(days) < 2:
+            if len(self.samples) >= 2 and (span := self.samples[-1][0] - self.samples[0][0]) >= 3600:
+                return (self.samples[-1][1] - self.samples[0][1]) / (span / 86400)
             return None
         (first_day, first), (last_day, last) = days[max(0, len(days) - 8)], days[-1]
         span = (time.mktime(time.strptime(last_day, "%Y-%m-%d")) - time.mktime(time.strptime(first_day, "%Y-%m-%d")))
@@ -195,6 +201,9 @@ class Doctor:
             result["energy_issues"] = issues
             result["growth"] = self.growth()
             result["sizes"] = sorted(self.sizes.items())
+            result["samples"] = self.samples
+            # Less than two days measured: the forecast is only a first guess.
+            result["provisional"] = len(self.sizes) < 3
             result["health"] = await health.async_health(self.hass, result["size"])
             result["suggestion"] = self._suggestion(result)
             result["entities"] = result["entities"][:200]
