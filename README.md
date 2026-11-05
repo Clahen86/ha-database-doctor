@@ -54,7 +54,7 @@ Database Doctor reads how each entity is used, not just where its name appears: 
 
 ### Safe by design
 
-- Data is only changed with the recorder's own functions (*Adjust sum*, import of statistics, purge) – never raw SQL.
+- Data is only changed with the recorder's own functions (*Adjust sum*, import of statistics, purge) – never raw SQL. The database is otherwise only read, in a read-only session, to count what fills it.
 - Fixes and changes of how often devices save can be undone. A clean-up can't, so it offers Home Assistant's own backup first.
 - Your YAML files are never written.
 

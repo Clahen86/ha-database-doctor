@@ -1,7 +1,8 @@
 """What fills the database: rows per entity, the file size, growth and free disk.
 
 Everything here only READS the database, in the recorder's own thread (get_instance(hass).async_add_executor_job),
-through the recorder's own models - never raw SQL and never a write.
+in a read-only session through the recorder's own models. The one plain query asks MariaDB/MySQL or PostgreSQL for the
+database's size, which the recorder doesn't offer. Nothing here ever writes.
 """
 
 from __future__ import annotations
