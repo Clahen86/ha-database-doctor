@@ -1,6 +1,14 @@
 // Energy Doctor panel: tabs Overview · Energy · Data · Settings.
 
 const EN = {
+  updated: "Updated {n}",
+  agoNow: "just now",
+  agoMin: "{n} min ago",
+  agoHour: "{n} h ago",
+  refreshing: "Updating …",
+  backupWorking: "Making a backup …",
+  backupHint: "Home Assistant's own backup – it can take a few minutes on a big installation.",
+  cleaning: "Cleaning up …",
   provisional: "First estimate from the first hours – it gets more precise after a couple of days.",
   title: "Energy Doctor",
   tabs: { overview: "Overview", energy: "Energy", data: "Data", settings: "Settings" },
@@ -138,6 +146,14 @@ const EN = {
 };
 
 const DA = {
+  updated: "Opdateret {n}",
+  agoNow: "lige nu",
+  agoMin: "for {n} min. siden",
+  agoHour: "for {n} t. siden",
+  refreshing: "Opdaterer …",
+  backupWorking: "Laver en backup …",
+  backupHint: "Home Assistants egen backup – det kan tage nogle minutter på en stor installation.",
+  cleaning: "Rydder op …",
   provisional: "Første skøn ud fra de første timer – det bliver mere præcist efter et par dage.",
   title: "Energi-doktor",
   tabs: { overview: "Overblik", energy: "Energi", data: "Data", settings: "Indstillinger" },
@@ -275,6 +291,14 @@ const DA = {
 };
 
 const DE = {
+  updated: "Aktualisiert {n}",
+  agoNow: "gerade eben",
+  agoMin: "vor {n} Min.",
+  agoHour: "vor {n} Std.",
+  refreshing: "Wird aktualisiert …",
+  backupWorking: "Backup wird erstellt …",
+  backupHint: "Home Assistants eigenes Backup – das kann bei einer großen Installation ein paar Minuten dauern.",
+  cleaning: "Wird aufgeräumt …",
   provisional: "Erste Schätzung aus den ersten Stunden – nach ein paar Tagen wird sie genauer.",
   title: "Energie-Doktor",
   tabs: { overview: "Übersicht", energy: "Energie", data: "Daten", settings: "Einstellungen" },
@@ -359,6 +383,14 @@ const DE = {
 };
 
 const SV = {
+  updated: "Uppdaterad {n}",
+  agoNow: "nyss",
+  agoMin: "för {n} min sedan",
+  agoHour: "för {n} tim sedan",
+  refreshing: "Uppdaterar …",
+  backupWorking: "Gör en säkerhetskopia …",
+  backupHint: "Home Assistants egen säkerhetskopia – det kan ta några minuter på en stor installation.",
+  cleaning: "Städar …",
   provisional: "Första uppskattning från de första timmarna – den blir mer exakt efter ett par dagar.",
   title: "Energidoktorn",
   tabs: { overview: "Översikt", energy: "Energi", data: "Data", settings: "Inställningar" },
@@ -443,6 +475,14 @@ const SV = {
 };
 
 const NL = {
+  updated: "Bijgewerkt {n}",
+  agoNow: "zojuist",
+  agoMin: "{n} min geleden",
+  agoHour: "{n} uur geleden",
+  refreshing: "Bijwerken …",
+  backupWorking: "Back-up maken …",
+  backupHint: "Home Assistants eigen back-up – dat kan op een grote installatie een paar minuten duren.",
+  cleaning: "Opruimen …",
   provisional: "Eerste schatting uit de eerste uren – na een paar dagen wordt die nauwkeuriger.",
   title: "Energiedokter",
   tabs: { overview: "Overzicht", energy: "Energie", data: "Data", settings: "Instellingen" },
@@ -604,13 +644,22 @@ class EnergyDoctorPanel extends HTMLElement {
     this.view = "working";
     this.render();
     try {
-      const [data, history, settings] = await Promise.all([this.ws("overview", { fresh }), this.ws("history"), this.ws("settings")]);
+      const [data, history, settings] = await Promise.all([this.ws("overview", { fresh, stale: !fresh }), this.ws("history"), this.ws("settings")]);
       this.data = data;
       this.history = history;
       this.settings = settings;
       this.overrides = { ...(settings.overrides || {}) };
       this.view = "tabs";
       this.render();
+      // An older picture opened at once: get a fresh one quietly behind it.
+      if (data.stale) {
+        this.refreshing = true;
+        this.render();
+        this.ws("overview", { fresh: true, stale: false }).then((d) => (this.data = d)).catch(() => {}).finally(() => {
+          this.refreshing = false;
+          this.render();
+        });
+      }
       // The slower parts come in behind the first picture.
       const [extra, rates] = await Promise.all([
         this.ws("energy_extra").catch(() => null),
@@ -649,8 +698,16 @@ class EnergyDoctorPanel extends HTMLElement {
         <div class="center"><b>${d.size != null ? this.bytes(d.size) : this.num(d.rows, 0)}</b><span>${d.growth != null ? this.t("perDay", { n: this.bytes(Math.max(d.growth, 0)) }) : ""}</span></div></div>
       <div class="legend">${legend}</div>
       <p class="lead">${esc(text)}</p>
+      <p class="muted small">${this.refreshing ? `<span class="spinner tiny"></span> ${this.t("refreshing")}` : esc(this.t("updated", { n: this.ago(d.at) }))}</p>
       ${d.size == null ? `<p class="muted small">${this.t("sizeUnknown")}</p>` : ""}
     </div>`;
+  }
+
+  ago(ts) {
+    const min = Math.max(0, Math.round((Date.now() / 1000 - ts) / 60));
+    if (min < 2) return this.t("agoNow");
+    if (min < 120) return this.t("agoMin", { n: min });
+    return this.t("agoHour", { n: Math.round(min / 60) });
   }
 
   duration(days) {
@@ -949,7 +1006,8 @@ class EnergyDoctorPanel extends HTMLElement {
   }
 
   workingView() {
-    return `<div class="card working"><div class="spinner"></div><b>${this.t("working")}</b><span class="muted small">${this.t("workingHint")}</span></div>`;
+    const [title, hint] = this.workingText || [this.t("working"), this.t("workingHint")];
+    return `<div class="card working"><div class="spinner"></div><b>${esc(title)}</b><span class="muted small">${esc(hint)}</span></div>`;
   }
 
   render() {
@@ -1022,15 +1080,18 @@ class EnergyDoctorPanel extends HTMLElement {
   async run(job, title, text = "") {
     this.view = "working";
     this.render();
+    const reset = () => (this.workingText = null);
     try {
       const r = await job();
       this.doneTitle = typeof title === "function" ? title(r) : title;
       this.doneText = text;
       this.doneUndo = r?.undoable ? r.id : null;
       this.view = "done";
+      reset();
     } catch (e) {
       this.message = this.t("error", { e: e.message || e });
       this.view = "tabs";
+      reset();
     }
     this.render();
   }
@@ -1065,7 +1126,18 @@ class EnergyDoctorPanel extends HTMLElement {
       this.render();
     } else if (a === "cleanDo") {
       const s = this.cleanPlan || this.data.suggestion;
-      this.run(() => this.ws("cleanup", { deleted: s.deleted, trim: s.trim, keep_days: s.keep_days, backup: Boolean(this.settings.backup && this.backup) }), this.t("cleanDone"), this.t("cleanDoneText"));
+      const backup = Boolean(this.settings.backup && this.backup);
+      this.run(async () => {
+        // Each step says what it is waiting for: the backup can take minutes, the clean-up is quick.
+        if (backup) {
+          this.workingText = [this.t("backupWorking"), this.t("backupHint")];
+          this.render();
+          await this.ws("backup");
+        }
+        this.workingText = [this.t("cleaning"), ""];
+        this.render();
+        return this.ws("cleanup", { deleted: s.deleted, trim: s.trim, keep_days: s.keep_days, backup: false });
+      }, this.t("cleanDone"), this.t("cleanDoneText"));
     } else if (a === "fixPicked") {
       const ids = [...this.picked];
       this.run(async () => ({ ...(await this.ws("fix_energy", { issues: ids })), undoable: true }), (r) => this.t("fixedN", { n: r.fixed }));
@@ -1224,6 +1296,7 @@ select{height:40px;border-radius:10px;border:1px solid var(--divider-color,#d6dc
 .working{align-items:center;text-align:center;padding:48px 18px}
 .spinner{width:40px;height:40px;border-radius:50%;border:4px solid var(--divider-color,#e8ecf1);border-top-color:var(--primary-color,#0b6fa4);animation:spin 1s linear infinite}
 .small-spin{width:24px;height:24px;border-width:3px;align-self:center}
+.spinner.tiny{display:inline-block;width:12px;height:12px;border-width:2px;vertical-align:-2px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .done{align-items:center;text-align:center}.done ha-icon{--mdc-icon-size:56px;color:var(--success-color,#22a06b)}
 `;

@@ -235,3 +235,18 @@ async def test_growth_starts_from_hourly_samples(recorder_mock, hass: HomeAssist
     assert doctor.growth() is None
     doctor.sizes = {"2026-11-01": 1_000_000_000, "2026-11-03": 1_100_000_000}
     assert doctor.growth() == pytest.approx(50_000_000)
+
+
+async def test_opens_at_once_with_the_last_picture(recorder_mock, hass: HomeAssistant, doctor) -> None:
+    """An older picture comes back at once (marked stale) and survives a restart through the store."""
+    first = await doctor.async_overview(fresh=True)
+    doctor._cache = (first["at"] - 3600, first)
+    again = await doctor.async_overview(allow_stale=True)
+    assert again["stale"] and again["at"] == first["at"]
+    await doctor.store.async_save({"overview": first})
+    from custom_components.energy_doctor.doctor import Doctor
+
+    other = Doctor(hass)
+    await other.async_load()
+    assert (await other.async_overview(allow_stale=True))["at"] == first["at"]
+    other.async_stop()

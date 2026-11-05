@@ -55,6 +55,10 @@ class Doctor:
         self.history = [h for h in data.get("history", []) if h["at"] >= cutoff]
         self.sizes = data.get("sizes", {})
         self.samples = data.get("samples", [])
+        # The last picture, so the panel opens at once (also after a restart) and refreshes behind it.
+        if cached := data.get("overview"):
+            self._cache = (cached.get("at", 0), cached)
+            self._all = {e["entity_id"]: e for e in cached.get("entities", [])}
         self.seen = data.get("seen", [])
         self.levels = data.get("levels", {})
         self.settings = DEFAULT_SETTINGS | data.get("settings", {})
@@ -72,7 +76,10 @@ class Doctor:
             unsub()
 
     def _save(self) -> None:
-        self.store.async_delay_save(lambda: {"history": self.history, "sizes": self.sizes, "samples": self.samples, "seen": self.seen[-500:], "levels": self.levels, "settings": self.settings}, 1)
+        self.store.async_delay_save(lambda: {
+                "history": self.history, "sizes": self.sizes, "samples": self.samples, "seen": self.seen[-500:],
+                "levels": self.levels, "settings": self.settings, "overview": self._cache[1] if self._cache else None,
+            }, 1)
 
     @callback
     def _device_added(self, event: Event) -> None:
@@ -179,7 +186,10 @@ class Doctor:
 
     # ---------- the picture ----------
 
-    async def async_overview(self, fresh: bool = False) -> dict[str, Any]:
+    async def async_overview(self, fresh: bool = False, allow_stale: bool = False) -> dict[str, Any]:
+        """The analysis. allow_stale: an older picture at once (marked "stale"); the panel then asks for a fresh one."""
+        if not fresh and allow_stale and self._cache and not self._lock.locked():
+            return self._cache[1] | {"stale": time.time() - self._cache[0] >= CACHE_SECONDS}
         async with self._lock:
             if not fresh and self._cache and time.time() - self._cache[0] < CACHE_SECONDS:
                 return self._cache[1]
@@ -209,6 +219,7 @@ class Doctor:
             result["entities"] = result["entities"][:200]
             result["at"] = time.time()
             self._cache = (time.time(), result)
+            self._save()
             return result
 
     def _suggestion(self, result: dict[str, Any]) -> dict[str, Any]:
@@ -345,6 +356,13 @@ class Doctor:
         return {"id": record["id"], "fixed": len(issues)}
 
     # ---------- clean-up ----------
+
+    async def async_backup(self) -> bool:
+        """Home Assistant's own backup, with the user's settings. Takes minutes on a big installation."""
+        if not self.hass.services.has_service("backup", "create_automatic"):
+            return False
+        await self.hass.services.async_call("backup", "create_automatic", {}, blocking=True)
+        return True
 
     async def async_cleanup(
         self, deleted: list[str], trim: list[str], keep_days: int, backup: bool = False
