@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from homeassistant.components import frontend, panel_custom
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
@@ -34,6 +36,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: EnergyDoctorConfigEntry)
     doctor = Doctor(hass)
     await doctor.async_load()
     entry.runtime_data = doctor
+
+    async def _resume(_event: Any = None) -> None:
+        await doctor.async_resume_cleanups()
+
+    # A restart stops the recorder's purge, so unfinished clean-ups go on once Home Assistant has started.
+    if hass.is_running:
+        hass.async_create_task(_resume())
+    else:
+        entry.async_on_unload(hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _resume))
     entry.async_on_unload(doctor.async_stop)
     entry.async_on_unload(entry.add_update_listener(_options_changed))
     version = (await async_get_integration(hass, DOMAIN)).version

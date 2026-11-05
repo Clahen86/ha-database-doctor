@@ -118,8 +118,13 @@ async def test_analysis_counts_rows_and_finds_deleted_and_busy_unused(recorder_m
     result = await doctor.async_cleanup(suggestion["deleted"], [], 0)
     await async_wait_recording_done(hass)
     assert result["deleted"] == 1
+    record = doctor.history[-1]
+    assert record["rows_before"] >= 30 and record["rows_after"] == 0 and not record["finished"]
+    await doctor.async_resume_cleanups()  # what happens at start after a restart: safe to repeat
+    await async_wait_recording_done(hass)
     overview = await doctor.async_overview(fresh=True)
     assert "sensor.old_thing" not in {e["entity_id"] for e in overview["entities"]}
+    assert overview["cleaning"] is None and doctor.history[-1]["finished"]  # all rows gone: done
 
 
 async def test_fills_a_gap_and_fixes_the_price_of_the_same_hour(recorder_mock, hass: HomeAssistant, doctor) -> None:

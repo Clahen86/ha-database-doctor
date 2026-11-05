@@ -1,6 +1,9 @@
 // Energy Doctor panel: tabs Overview · Energy · Data · Settings.
 
 const EN = {
+  cleaningTitle: "Cleaning up · {p} %",
+  cleaningText: "The recorder works in the background – on a big database it can take an hour. Avoid restarting Home Assistant meanwhile (if you do, it carries on afterwards).",
+  cleanDoneText: "The recorder now removes it in the background. On a big database that can take an hour – follow it on Overview. If Home Assistant restarts meanwhile, it carries on afterwards.",
   cleanWhat: "{t} entities keep the last {k} days, and {d} deleted devices are cleaned out.",
   cleanWhatTrim: "{t} entities keep the last {k} days.",
   cleanWhatDeleted: "{d} deleted devices are cleaned out.",
@@ -163,7 +166,6 @@ const EN = {
   makeBackup: "Make a backup",
   cleanDo: "Clean up · save {n}",
   cleanDone: "Cleaned up",
-  cleanDoneText: "The database file gets smaller at the next repack (the recorder does that by itself every month).",
   recent: "Recently",
   recEnergy: "{n} hours fixed in Energy",
   recClean: "History removed for {n} entities",
@@ -177,6 +179,9 @@ const EN = {
 };
 
 const DA = {
+  cleaningTitle: "Oprydning i gang · {p} %",
+  cleaningText: "Recorderen arbejder i baggrunden – på en stor database kan det tage en time. Genstart helst ikke Home Assistant imens (gør du, fortsætter den bagefter).",
+  cleanDoneText: "Recorderen fjerner det nu i baggrunden. På en stor database kan det tage en time – følg med på Overblik. Genstarter Home Assistant imens, fortsætter den bagefter.",
   cleanWhat: "{t} entiteter beholder de sidste {k} dage, og {d} slettede enheder ryddes væk.",
   cleanWhatTrim: "{t} entiteter beholder de sidste {k} dage.",
   cleanWhatDeleted: "{d} slettede enheder ryddes væk.",
@@ -339,7 +344,6 @@ const DA = {
   makeBackup: "Lav en backup",
   cleanDo: "Ryd op · spar {n}",
   cleanDone: "Ryddet op",
-  cleanDoneText: "Databasefilen bliver mindre ved næste komprimering (recorderen gør det selv hver måned).",
   recent: "Seneste",
   recEnergy: "{n} timer rettet i Energi",
   recClean: "Historik fjernet for {n} entiteter",
@@ -353,6 +357,9 @@ const DA = {
 };
 
 const DE = {
+  cleaningTitle: "Aufräumen läuft · {p} %",
+  cleaningText: "Der Recorder arbeitet im Hintergrund – bei einer großen Datenbank kann das eine Stunde dauern. Starte Home Assistant möglichst nicht neu (sonst geht es danach weiter).",
+  cleanDoneText: "Der Recorder entfernt es jetzt im Hintergrund. Bei einer großen Datenbank kann das eine Stunde dauern – verfolge es in der Übersicht. Bei einem Neustart geht es danach weiter.",
   cleanWhat: "{t} Entitäten behalten die letzten {k} Tage, und {d} gelöschte Geräte werden aufgeräumt.",
   cleanWhatTrim: "{t} Entitäten behalten die letzten {k} Tage.",
   cleanWhatDeleted: "{d} gelöschte Geräte werden aufgeräumt.",
@@ -469,13 +476,15 @@ const DE = {
   cleanDeleted: "Der ganze Verlauf von {n} gelöschten Geräten", cleanTrim: "Verlauf älter als {k} Tage von {n} aktiven Entitäten, die nichts nutzt",
   cleanWarn: "Entfernte Daten lassen sich nicht wiederherstellen.", backupFirst: "Vorher ein Backup machen (Home Assistants eigenes)",
   makeBackup: "Backup machen", cleanDo: "Aufräumen · {n} sparen", cleanDone: "Aufgeräumt",
-  cleanDoneText: "Die Datei wird beim nächsten Komprimieren kleiner (macht der Recorder monatlich selbst).",
   recent: "Zuletzt", recEnergy: "{n} Stunden in Energie korrigiert", recClean: "Verlauf für {n} Entitäten entfernt",
   recSaved: "die Datenbank ist seitdem {n} kleiner", recRates: "Seltener speichern: {n} Änderungen", recDevices: "{n} Zähler zu Energie hinzugefügt",
   undo: "Rückgängig", undone: "Rückgängig gemacht", back: "Zurück", home: "Fertig", error: "Etwas ging schief: {e}", saved: "Gespeichert",
 };
 
 const SV = {
+  cleaningTitle: "Städning pågår · {p} %",
+  cleaningText: "Recordern arbetar i bakgrunden – på en stor databas kan det ta en timme. Undvik att starta om Home Assistant under tiden (gör du det fortsätter den efteråt).",
+  cleanDoneText: "Recordern tar nu bort det i bakgrunden. På en stor databas kan det ta en timme – följ det på Översikt. Startar Home Assistant om under tiden fortsätter den efteråt.",
   cleanWhat: "{t} entiteter behåller de senaste {k} dagarna, och {d} borttagna enheter rensas bort.",
   cleanWhatTrim: "{t} entiteter behåller de senaste {k} dagarna.",
   cleanWhatDeleted: "{d} borttagna enheter rensas bort.",
@@ -592,13 +601,15 @@ const SV = {
   cleanDeleted: "All historik från {n} borttagna enheter", cleanTrim: "Historik äldre än {k} dagar från {n} aktiva entiteter som inget använder",
   cleanWarn: "Borttagen data kan inte ångras.", backupFirst: "Gör en säkerhetskopia först (Home Assistants egen)",
   makeBackup: "Gör en säkerhetskopia", cleanDo: "Städa · spara {n}", cleanDone: "Städat",
-  cleanDoneText: "Databasfilen krymper vid nästa komprimering (recordern gör det själv varje månad).",
   recent: "Senaste", recEnergy: "{n} timmar rättade i Energi", recClean: "Historik borttagen för {n} entiteter",
   recSaved: "databasen är {n} mindre sedan dess", recRates: "Spara mer sällan: {n} ändringar", recDevices: "{n} mätare tillagda i Energi",
   undo: "Ångra", undone: "Ångrat", back: "Tillbaka", home: "Klar", error: "Något gick fel: {e}", saved: "Sparat",
 };
 
 const NL = {
+  cleaningTitle: "Opruimen bezig · {p} %",
+  cleaningText: "De recorder werkt op de achtergrond – bij een grote database kan dat een uur duren. Herstart Home Assistant liever niet ondertussen (doe je dat, dan gaat het daarna verder).",
+  cleanDoneText: "De recorder verwijdert het nu op de achtergrond. Bij een grote database kan dat een uur duren – volg het op Overzicht. Herstart Home Assistant ondertussen, dan gaat het daarna verder.",
   cleanWhat: "{t} entiteiten houden de laatste {k} dagen, en {d} verwijderde apparaten worden opgeruimd.",
   cleanWhatTrim: "{t} entiteiten houden de laatste {k} dagen.",
   cleanWhatDeleted: "{d} verwijderde apparaten worden opgeruimd.",
@@ -715,7 +726,6 @@ const NL = {
   cleanDeleted: "Alle geschiedenis van {n} verwijderde apparaten", cleanTrim: "Geschiedenis ouder dan {k} dagen van {n} drukke entiteiten die niets gebruikt",
   cleanWarn: "Verwijderde data kan niet worden teruggezet.", backupFirst: "Eerst een back-up maken (Home Assistants eigen back-up)",
   makeBackup: "Back-up maken", cleanDo: "Opruimen · bespaar {n}", cleanDone: "Opgeruimd",
-  cleanDoneText: "Het databasebestand wordt kleiner bij de volgende comprimering (de recorder doet dat elke maand zelf).",
   recent: "Recent", recEnergy: "{n} uur hersteld in Energie", recClean: "Geschiedenis verwijderd voor {n} entiteiten",
   recSaved: "de database is sindsdien {n} kleiner", recRates: "Minder vaak opslaan: {n} wijzigingen", recDevices: "{n} meters toegevoegd aan Energie",
   undo: "Ongedaan maken", undone: "Ongedaan gemaakt", back: "Terug", home: "Klaar", error: "Er ging iets mis: {e}", saved: "Opgeslagen",
@@ -822,6 +832,7 @@ class EnergyDoctorPanel extends HTMLElement {
       ]);
       this.extra = extra;
       this.rates = rates;
+      this.followCleaning();
       if (rates) this.choice = { ...(rates.chosen || {}) };
       this.render();
     } catch (e) {
@@ -829,6 +840,23 @@ class EnergyDoctorPanel extends HTMLElement {
       this.view = "tabs";
       this.render();
     }
+  }
+
+  // While the recorder cleans up, the progress is fetched again every minute.
+  followCleaning() {
+    clearTimeout(this._follow);
+    if (!this.data?.cleaning) return;
+    this._follow = setTimeout(async () => {
+      try {
+        if (this.isConnected) this.data = await this.ws("overview", { fresh: true, stale: false });
+      } catch (e) { /* tried again next minute */ }
+      if (this.view === "tabs") this.render();
+      this.followCleaning();
+    }, 60000);
+  }
+
+  disconnectedCallback() {
+    clearTimeout(this._follow);
   }
 
   // ---------- overview ----------
@@ -920,6 +948,15 @@ class EnergyDoctorPanel extends HTMLElement {
         <button class="soft" data-act="tab" data-tab="settings">${this.t("change")}</button></div></div>`;
   }
 
+  cleaningCard() {
+    const c = this.data.cleaning;
+    if (!c) return "";
+    const pct = Math.round(c.progress * 100);
+    return `<div class="card"><div class="head"><span class="spinner tiny"></span><b>${this.t("cleaningTitle", { p: pct })}</b></div>
+      <div class="bar big"><div style="width:${Math.max(3, pct)}%;background:var(--primary-color,#0b6fa4)"></div></div>
+      <div class="small muted">${this.t("cleaningText")}</div></div>`;
+  }
+
   suggestionCard() {
     const s = this.data.suggestion;
     if (!s.bytes) return `<div class="card okcard"><ha-icon icon="mdi:check-decagram"></ha-icon><span class="grow">${this.t("nothingToSave")}</span></div>`;
@@ -963,7 +1000,7 @@ class EnergyDoctorPanel extends HTMLElement {
   }
 
   overviewTab() {
-    return `${this.ring()}${this.aiCard()}${this.suggestionCard()}${this.ratesCard()}${this.graph()}${this.healthCard()}${this.recentCard()}
+    return `${this.ring()}${this.cleaningCard()}${this.aiCard()}${this.suggestionCard()}${this.ratesCard()}${this.graph()}${this.healthCard()}${this.recentCard()}
       <button class="link center-link" data-act="fresh"><ha-icon icon="mdi:refresh"></ha-icon> ${this.t("fresh")}</button>`;
   }
 

@@ -218,14 +218,15 @@ class Doctor:
             # Less than two days measured: the forecast is only a first guess.
             result["provisional"] = len(self.sizes) < 3
             result["health"] = await health.async_health(self.hass, result["size"])
-            result["suggestion"] = self._suggestion(result)
+            result["cleaning"] = self._cleaning(self._all)
+            result["suggestion"] = self._suggestion(result, set((result["cleaning"] or {}).get("targets", [])))
             result["entities"] = result["entities"][:200]
             result["at"] = time.time()
             self._cache = (time.time(), result)
             self._save()
             return result
 
-    def _suggestion(self, result: dict[str, Any]) -> dict[str, Any]:
+    def _suggestion(self, result: dict[str, Any], busy: set[str] = frozenset()) -> dict[str, Any]:
         """The one-tap clean-up: data of deleted entities, and old history of busy entities nothing uses."""
         per_row = (result["size"] / result["rows"]) if result["size"] and result["rows"] else 300
         deleted, trim, saved, items = [], [], 0, []
@@ -236,6 +237,8 @@ class Doctor:
             return {"entity_id": e["entity_id"], "name": e["name"], "bytes": bytes_, "kind": kind, "uses": uses}
 
         for e in result["entities"]:
+            if e["entity_id"] in busy:
+                continue  # being cleaned right now
             if e["deleted"]:
                 deleted.append(e["entity_id"])
                 saved += e["bytes"]
@@ -416,25 +419,61 @@ class Doctor:
             # Home Assistant's own backup, with the user's backup settings (where and what to keep).
             await hass.services.async_call("backup", "create_automatic", {}, blocking=True)
             backed_up = True
-        if deleted:
-            await hass.services.async_call("recorder", "purge_entities", {"entity_id": deleted, "keep_days": 0}, blocking=True)
-            # Long-term statistics of entities that are gone (only the recorder's own, never imported ones).
-            gone = [s for s in deleted if ":" not in s]
-            if gone:
-                get_instance(hass).async_clear_statistics(gone)
-        if trim:
-            await hass.services.async_call(
-                "recorder", "purge_entities", {"entity_id": trim, "keep_days": keep_days}, blocking=True
-            )
+        # Rows to go, so the panel can show how far the recorder has come (a big database takes an hour or more).
+        rows_before = sum(self._all.get(e, {}).get("rows", 0) for e in deleted + trim)
+        rows_after = sum(self._all.get(e, {}).get("per_day", 0) * keep_days for e in trim)
         record = {
             "id": uuid4().hex, "at": time.time(), "kind": "cleanup",
             "size_before": (self._cache[1]["size"] if self._cache else None),
             "deleted": deleted, "trim": trim, "keep_days": keep_days, "undone": False,
+            "rows_before": rows_before, "rows_after": rows_after, "finished": not rows_before,
         }
+        await self._async_purge(record)
+        if deleted:
+            # Long-term statistics of entities that are gone (only the recorder's own, never imported ones).
+            gone = [s for s in deleted if ":" not in s]
+            if gone:
+                get_instance(hass).async_clear_statistics(gone)
         self.history.append(record)
         self._save()
         self._cache = None
         return {"id": record["id"], "deleted": len(deleted), "trimmed": len(trim), "backup": backed_up}
+
+    async def _async_purge(self, record: dict[str, Any]) -> None:
+        """Queue the recorder's own purge. It works in batches in the background; a restart stops it, so an
+        unfinished clean-up is queued again at start (purging is safe to repeat)."""
+        hass = self.hass
+        if record["deleted"]:
+            await hass.services.async_call(
+                "recorder", "purge_entities", {"entity_id": record["deleted"], "keep_days": 0}, blocking=True
+            )
+        if record["trim"]:
+            await hass.services.async_call(
+                "recorder", "purge_entities",
+                {"entity_id": record["trim"], "keep_days": record["keep_days"]}, blocking=True,
+            )
+
+    async def async_resume_cleanups(self) -> None:
+        """At start: queue unfinished clean-ups of the last day again."""
+        for record in self.history:
+            if record["kind"] == "cleanup" and not record.get("finished") and time.time() - record["at"] < 86400:
+                await self._async_purge(record)
+
+    def _cleaning(self, entities: dict[str, dict[str, Any]]) -> dict[str, Any] | None:
+        """How far the newest unfinished clean-up has come, from the rows its entities still have."""
+        open_ = [r for r in self.history if r["kind"] == "cleanup" and not r.get("finished") and r.get("rows_before")]
+        if not open_:
+            return None
+        record = open_[-1]
+        targets = record["deleted"] + record["trim"]
+        now = sum(entities.get(e, {}).get("rows", 0) for e in targets)
+        to_go = max(1, record["rows_before"] - record["rows_after"])
+        progress = min(1.0, max(0.0, (record["rows_before"] - now) / to_go))
+        if progress >= 0.97 or time.time() - record["at"] > 2 * 86400:
+            record["finished"] = True
+            self._save()
+            return None
+        return {"id": record["id"], "progress": round(progress, 3), "targets": targets, "at": record["at"]}
 
     # ---------- history ----------
 
