@@ -91,12 +91,18 @@ async def test_analysis_counts_rows_and_finds_deleted_and_busy_unused(recorder_m
         hass.states.async_set("sensor.signal_linkquality", str(100 + i))
         hass.states.async_set("sensor.old_thing", str(i))
     await async_wait_recording_done(hass)
-    hass.states.async_remove("sensor.old_thing")  # gone: no state, no registry entry
+    hass.states.async_remove("sensor.old_thing")  # gone: no state, no registry entry …
     await hass.async_block_till_done()
+    # … and nothing written for days (a sensor that is only missing since a restart is not "deleted").
+    import custom_components.energy_doctor.analysis as analysis
 
-    with patch("custom_components.energy_doctor.doctor.BUSY_PER_DAY", 10), patch(
+    overview = await doctor.async_overview(fresh=True)
+    assert not {e["entity_id"]: e for e in overview["entities"]}["sensor.old_thing"]["deleted"]
+    real_time = analysis.time.time
+
+    with patch("custom_components.energy_doctor.doctor.BUSY_PER_DAY", 0), patch(
         "custom_components.energy_doctor.doctor.TRIM_KEEP_DAYS", 0
-    ):
+    ), patch.object(analysis.time, "time", lambda: real_time() + 4 * 86400):
         overview = await doctor.async_overview(fresh=True)
     by_id = {e["entity_id"]: e for e in overview["entities"]}
     assert by_id["sensor.stue_temperatur"]["rows"] >= 3

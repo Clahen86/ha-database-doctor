@@ -146,8 +146,9 @@ async def async_analyse(hass: HomeAssistant) -> dict[str, Any]:
                 "rows": data["rows"],
                 "per_day": data["per_day"],
                 "bytes": size,
-                # Gone from Home Assistant: no registry entry and no state - only its old history is left.
-                "deleted": state is None and entry is None,
+                # Gone from Home Assistant: no registry entry, no state, and nothing written for days. (A sensor that
+                # AppDaemon or a script makes with set_state is missing for a while after every restart.)
+                "deleted": state is None and entry is None and data["per_day"] == 0,
             }
         )
     entities.sort(key=lambda e: e["bytes"], reverse=True)
