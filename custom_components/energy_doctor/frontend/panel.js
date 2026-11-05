@@ -1,6 +1,18 @@
 // Energy Doctor panel: tabs Overview · Energy · Data · Settings.
 
 const EN = {
+  cleanWhat: "{t} entities keep the last {k} days, and {d} deleted devices are cleaned out.",
+  cleanWhatTrim: "{t} entities keep the last {k} days.",
+  cleanWhatDeleted: "{d} deleted devices are cleaned out.",
+  safeTitle: "Why it's safe",
+  safe1: "No graph, the energy dashboard or a history helper uses them",
+  safe2: "Automations and templates only use the value now – it stays",
+  safe3: "Hourly statistics stay, so long graphs still work",
+  safe4: "{n} entities marked “Never touch” are left alone",
+  seeWhat: "See what is cleaned ({n})",
+  whyGone: "No longer exists",
+  whyUnused: "Not used anywhere",
+  whyValue: "Only its value now is used: {list}",
   st2: {"history": "History used – keep", "value": "Used – only its value", "value_busy": "Used – old history can go", "protected": "Never touch"},
   protectOn: "Never touch",
   protectOff: "Allow again",
@@ -165,6 +177,18 @@ const EN = {
 };
 
 const DA = {
+  cleanWhat: "{t} entiteter beholder de sidste {k} dage, og {d} slettede enheder ryddes væk.",
+  cleanWhatTrim: "{t} entiteter beholder de sidste {k} dage.",
+  cleanWhatDeleted: "{d} slettede enheder ryddes væk.",
+  safeTitle: "Derfor er det sikkert",
+  safe1: "Ingen grafer, Energi-dashboardet eller historik-hjælpere bruger dem",
+  safe2: "Automationer og templates bruger kun den nuværende værdi – den bliver",
+  safe3: "Timeværdier og statistik bliver, så lange grafer virker stadig",
+  safe4: "{n} entiteter med “Rør aldrig” bliver ikke rørt",
+  seeWhat: "Se hvad der ryddes ({n})",
+  whyGone: "Findes ikke længere",
+  whyUnused: "Bruges ingen steder",
+  whyValue: "Kun den nuværende værdi bruges: {list}",
   st2: {"history": "Historik bruges – behold", "value": "Bruges – kun værdien", "value_busy": "Bruges – gammel historik kan ryddes", "protected": "Rør aldrig"},
   protectOn: "Rør aldrig",
   protectOff: "Må røres igen",
@@ -329,6 +353,18 @@ const DA = {
 };
 
 const DE = {
+  cleanWhat: "{t} Entitäten behalten die letzten {k} Tage, und {d} gelöschte Geräte werden aufgeräumt.",
+  cleanWhatTrim: "{t} Entitäten behalten die letzten {k} Tage.",
+  cleanWhatDeleted: "{d} gelöschte Geräte werden aufgeräumt.",
+  safeTitle: "Warum das sicher ist",
+  safe1: "Keine Grafik, kein Energie-Dashboard und kein Verlaufshelfer nutzt sie",
+  safe2: "Automationen und Templates nutzen nur den aktuellen Wert – der bleibt",
+  safe3: "Stundenwerte und Statistik bleiben, lange Grafiken funktionieren weiter",
+  safe4: "{n} Entitäten mit „Nie anfassen“ bleiben unberührt",
+  seeWhat: "Ansehen, was aufgeräumt wird ({n})",
+  whyGone: "Gibt es nicht mehr",
+  whyUnused: "Wird nirgends genutzt",
+  whyValue: "Nur der aktuelle Wert wird genutzt: {list}",
   st2: {"history": "Verlauf genutzt – behalten", "value": "Genutzt – nur der Wert", "value_busy": "Genutzt – alter Verlauf kann weg", "protected": "Nie anfassen"},
   protectOn: "Nie anfassen",
   protectOff: "Wieder erlauben",
@@ -440,6 +476,18 @@ const DE = {
 };
 
 const SV = {
+  cleanWhat: "{t} entiteter behåller de senaste {k} dagarna, och {d} borttagna enheter rensas bort.",
+  cleanWhatTrim: "{t} entiteter behåller de senaste {k} dagarna.",
+  cleanWhatDeleted: "{d} borttagna enheter rensas bort.",
+  safeTitle: "Därför är det säkert",
+  safe1: "Ingen graf, energipanelen eller historikhjälpare använder dem",
+  safe2: "Automationer och mallar använder bara det nuvarande värdet – det finns kvar",
+  safe3: "Timvärden och statistik finns kvar, så långa grafer fungerar fortfarande",
+  safe4: "{n} entiteter med ”Rör aldrig” lämnas ifred",
+  seeWhat: "Se vad som rensas ({n})",
+  whyGone: "Finns inte längre",
+  whyUnused: "Används ingenstans",
+  whyValue: "Bara det nuvarande värdet används: {list}",
   st2: {"history": "Historik används – behåll", "value": "Används – bara värdet", "value_busy": "Används – gammal historik kan tas bort", "protected": "Rör aldrig"},
   protectOn: "Rör aldrig",
   protectOff: "Tillåt igen",
@@ -551,6 +599,18 @@ const SV = {
 };
 
 const NL = {
+  cleanWhat: "{t} entiteiten houden de laatste {k} dagen, en {d} verwijderde apparaten worden opgeruimd.",
+  cleanWhatTrim: "{t} entiteiten houden de laatste {k} dagen.",
+  cleanWhatDeleted: "{d} verwijderde apparaten worden opgeruimd.",
+  safeTitle: "Waarom het veilig is",
+  safe1: "Geen grafiek, energiedashboard of geschiedenishelper gebruikt ze",
+  safe2: "Automatiseringen en templates gebruiken alleen de huidige waarde – die blijft",
+  safe3: "Uurwaarden en statistiek blijven, dus lange grafieken werken nog",
+  safe4: "{n} entiteiten met ‘Nooit aanraken’ blijven ongemoeid",
+  seeWhat: "Bekijk wat wordt opgeruimd ({n})",
+  whyGone: "Bestaat niet meer",
+  whyUnused: "Nergens gebruikt",
+  whyValue: "Alleen de huidige waarde wordt gebruikt: {list}",
   st2: {"history": "Geschiedenis gebruikt – behouden", "value": "Gebruikt – alleen de waarde", "value_busy": "Gebruikt – oude geschiedenis kan weg", "protected": "Nooit aanraken"},
   protectOn: "Nooit aanraken",
   protectOff: "Weer toestaan",
@@ -1126,10 +1186,30 @@ class EnergyDoctorPanel extends HTMLElement {
 
   cleanView() {
     const s = this.cleanPlan || this.data.suggestion;
-    return `<div class="card"><h2>${this.t("cleanTitle")}</h2><p class="muted">${this.t("cleanIntro")}</p>
-        ${s.deleted.length ? `<div class="irow"><ha-icon icon="mdi:delete-outline"></ha-icon><div class="grow">${esc(this.t("cleanDeleted", { n: s.deleted.length }))}</div></div>` : ""}
-        ${s.trim.length ? `<div class="irow"><ha-icon icon="mdi:content-cut"></ha-icon><div class="grow">${esc(this.t("cleanTrim", { n: s.trim.length, k: s.keep_days }))}</div></div>` : ""}
+    const items = s.items || [];
+    const protectedCount = (this.data.entities || []).filter((e) => e.protected).length;
+    const what = s.trim.length && s.deleted.length ? this.t("cleanWhat", { t: s.trim.length, k: s.keep_days, d: s.deleted.length })
+      : s.trim.length ? this.t("cleanWhatTrim", { t: s.trim.length, k: s.keep_days }) : this.t("cleanWhatDeleted", { d: s.deleted.length });
+    const safe = [
+      this.t("safe1"),
+      ...(s.trim.length ? [this.t("safe2"), this.t("safe3")] : []),
+      ...(protectedCount ? [this.t("safe4", { n: protectedCount })] : []),
+    ];
+    const why = (i) => i.kind === "deleted" ? this.t("whyGone")
+      : !i.uses.length ? this.t("whyUnused")
+      : this.t("whyValue", { list: [...new Set(i.uses.map((u) => (u.kind === "energy" ? this.t("groups.energy") : u.name)))].join(", ") });
+    const row = (i) => `<div class="citem"><div class="line"><span class="name">${esc(i.name)}</span><span class="nowrap muted">${this.bytes(i.bytes)}</span></div>
+        <div class="small muted">${esc(why(i))}</div></div>`;
+    return `<div class="card hero">
+        <span class="eyebrow">${this.t("cleanTitle")}</span>
+        <span class="big">${s.bytes ? this.t("save", { n: this.bytes(s.bytes) }) : this.t("cleanup")}</span>
+        <span>${esc(what)}</span>
       </div>
+      <div class="card"><b>${this.t("safeTitle")}</b>
+        ${safe.map((x) => `<div class="hrow ok"><ha-icon icon="mdi:check-circle"></ha-icon><span>${esc(x)}</span></div>`).join("")}
+      </div>
+      ${items.length ? `<details class="card clist"><summary><span class="grow"><b>${this.t("seeWhat", { n: items.length })}</b></span><ha-icon icon="mdi:chevron-down"></ha-icon></summary>
+        <div class="cscroll">${items.map(row).join("")}</div></details>` : ""}
       <div class="card warncard"><ha-icon icon="mdi:shield-alert-outline"></ha-icon><div class="grow"><span>${this.t("cleanWarn")}</span>
         ${this.settings.backup ? `<label class="irow pick nob"><input type="checkbox" id="backup" ${this.backup ? "checked" : ""}><span class="box"></span><span class="grow">${this.t("backupFirst")}</span></label>` : `<br><a href="/config/backup" target="_top">${this.t("makeBackup")}</a>`}</div></div>
       <div class="actions"><button class="ghost" data-act="tabs">${this.t("back")}</button>
@@ -1259,7 +1339,8 @@ class EnergyDoctorPanel extends HTMLElement {
       this.render();
     } else if (a === "cleanRow") {
       const r = this.rowByKey(d.key);
-      this.cleanPlan = { deleted: r.entities.map((e) => e.entity_id), trim: [], keep_days: 0, bytes: r.bytes };
+      this.cleanPlan = { deleted: r.entities.map((e) => e.entity_id), trim: [], keep_days: 0, bytes: r.bytes,
+        items: r.entities.map((e) => ({ entity_id: e.entity_id, name: e.name, bytes: e.bytes, kind: "deleted", uses: [] })) };
       this.view = "clean";
       this.render();
     } else if (a === "cleanDo") {
@@ -1311,7 +1392,9 @@ class EnergyDoctorPanel extends HTMLElement {
     } else if (a === "trimRow") {
       const r = this.rowByKey(d.key);
       const ids = r.entities.filter((e) => !e.history_used && !e.protected).map((e) => e.entity_id);
-      this.cleanPlan = { deleted: [], trim: ids, keep_days: 3, bytes: 0 };
+      const keep = r.entities.filter((e) => ids.includes(e.entity_id));
+      this.cleanPlan = { deleted: [], trim: ids, keep_days: 3, bytes: keep.reduce((a, e) => a + Math.max(0, e.bytes - e.per_day * 3 * 300), 0),
+        items: keep.map((e) => ({ entity_id: e.entity_id, name: e.name, bytes: e.bytes, kind: "trim", uses: e.used_in })) };
       this.view = "clean";
       this.render();
     } else if (a === "protect") {
@@ -1415,7 +1498,10 @@ button{font-family:inherit;cursor:pointer}
 .dot{width:10px;height:10px;border-radius:5px;display:inline-block;flex:none}
 .irow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--divider-color,#eef1f4)}.irow:last-of-type{border-bottom:0}
 .hrow{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.4}.hrow ha-icon{--mdc-icon-size:20px;flex:none}
-.hrow.warn ha-icon{color:#b54708}.hrow.info ha-icon{color:var(--secondary-text-color)}
+.hrow.warn ha-icon{color:#b54708}.hrow.ok ha-icon{color:var(--success-color,#22a06b)}
+.clist summary{display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;min-height:28px}.clist summary::-webkit-details-marker{display:none}
+.clist[open] summary ha-icon{transform:rotate(180deg)}
+.cscroll{max-height:420px;overflow-y:auto;margin-top:6px}.citem{padding:10px 0;border-bottom:1px solid var(--divider-color,#eef1f4)}.citem:last-child{border:0}.hrow.info ha-icon{color:var(--secondary-text-color)}
 .grow{flex:1;min-width:0}.name{font-size:15px;font-weight:500;overflow-wrap:anywhere}
 .erow{border-bottom:1px solid var(--divider-color,#eef1f4);padding:4px 0 10px}.erow:last-of-type{border-bottom:0}
 .rowhead{all:unset;display:flex;flex-direction:column;gap:6px;width:100%;padding:8px 0;cursor:pointer;box-sizing:border-box}

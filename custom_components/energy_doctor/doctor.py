@@ -228,18 +228,27 @@ class Doctor:
     def _suggestion(self, result: dict[str, Any]) -> dict[str, Any]:
         """The one-tap clean-up: data of deleted entities, and old history of busy entities nothing uses."""
         per_row = (result["size"] / result["rows"]) if result["size"] and result["rows"] else 300
-        deleted, trim, saved = [], [], 0
+        deleted, trim, saved, items = [], [], 0, []
+
+        def item(e: dict[str, Any], kind: str, bytes_: int) -> dict[str, Any]:
+            # What it is used for, so the user sees why it is safe: only values now, or nothing at all.
+            uses = [{"kind": u["kind"], "name": u["name"]} for u in e["used_in"]][:3]
+            return {"entity_id": e["entity_id"], "name": e["name"], "bytes": bytes_, "kind": kind, "uses": uses}
+
         for e in result["entities"]:
             if e["deleted"]:
                 deleted.append(e["entity_id"])
                 saved += e["bytes"]
+                items.append(item(e, "deleted", e["bytes"]))
             elif not e["history_used"] and not e["protected"] and e["per_day"] >= BUSY_PER_DAY:
                 # Automations and templates only need the value now, so old history of a busy entity can go.
                 keep = e["per_day"] * TRIM_KEEP_DAYS * per_row
                 if e["bytes"] > keep:
                     trim.append(e["entity_id"])
                     saved += round(e["bytes"] - keep)
-        return {"deleted": deleted, "trim": trim, "keep_days": TRIM_KEEP_DAYS, "bytes": saved}
+                    items.append(item(e, "trim", round(e["bytes"] - keep)))
+        items.sort(key=lambda i: i["bytes"], reverse=True)
+        return {"deleted": deleted, "trim": trim, "keep_days": TRIM_KEEP_DAYS, "bytes": saved, "items": items}
 
     # ---------- settings ----------
 
