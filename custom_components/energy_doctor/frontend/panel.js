@@ -1,6 +1,12 @@
 // Energy Doctor panel: tabs Overview · Energy · Data · Settings.
 
 const EN = {
+  repackAfter: "Make the file smaller when it is done (repack)",
+  recFreed: "≈ {n} freed in the database",
+  recRepacking: "the file is being made smaller …",
+  recSmaller: "the file is {n} smaller",
+  recNoRoom: "too little free disk to make the file smaller",
+  repackNow: "Make the file smaller",
   cleaningTitle: "Cleaning up · {p} %",
   cleaningText: "The recorder works in the background – on a big database it can take an hour. Avoid restarting Home Assistant meanwhile (if you do, it carries on afterwards).",
   cleanDoneText: "The recorder now removes it in the background. On a big database that can take an hour – follow it on Overview. If Home Assistant restarts meanwhile, it carries on afterwards.",
@@ -179,6 +185,12 @@ const EN = {
 };
 
 const DA = {
+  repackAfter: "Gør filen mindre, når den er færdig (komprimering)",
+  recFreed: "≈ {n} frigivet i databasen",
+  recRepacking: "filen gøres mindre …",
+  recSmaller: "filen er {n} mindre",
+  recNoRoom: "for lidt fri plads på disken til at gøre filen mindre",
+  repackNow: "Gør filen mindre",
   cleaningTitle: "Oprydning i gang · {p} %",
   cleaningText: "Recorderen arbejder i baggrunden – på en stor database kan det tage en time. Genstart helst ikke Home Assistant imens (gør du, fortsætter den bagefter).",
   cleanDoneText: "Recorderen fjerner det nu i baggrunden. På en stor database kan det tage en time – følg med på Overblik. Genstarter Home Assistant imens, fortsætter den bagefter.",
@@ -357,6 +369,12 @@ const DA = {
 };
 
 const DE = {
+  repackAfter: "Datei danach verkleinern (komprimieren)",
+  recFreed: "≈ {n} in der Datenbank freigegeben",
+  recRepacking: "die Datei wird verkleinert …",
+  recSmaller: "die Datei ist {n} kleiner",
+  recNoRoom: "zu wenig freier Speicher zum Verkleinern",
+  repackNow: "Datei verkleinern",
   cleaningTitle: "Aufräumen läuft · {p} %",
   cleaningText: "Der Recorder arbeitet im Hintergrund – bei einer großen Datenbank kann das eine Stunde dauern. Starte Home Assistant möglichst nicht neu (sonst geht es danach weiter).",
   cleanDoneText: "Der Recorder entfernt es jetzt im Hintergrund. Bei einer großen Datenbank kann das eine Stunde dauern – verfolge es in der Übersicht. Bei einem Neustart geht es danach weiter.",
@@ -482,6 +500,12 @@ const DE = {
 };
 
 const SV = {
+  repackAfter: "Gör filen mindre när det är klart (komprimering)",
+  recFreed: "≈ {n} frigjort i databasen",
+  recRepacking: "filen görs mindre …",
+  recSmaller: "filen är {n} mindre",
+  recNoRoom: "för lite ledigt diskutrymme för att göra filen mindre",
+  repackNow: "Gör filen mindre",
   cleaningTitle: "Städning pågår · {p} %",
   cleaningText: "Recordern arbetar i bakgrunden – på en stor databas kan det ta en timme. Undvik att starta om Home Assistant under tiden (gör du det fortsätter den efteråt).",
   cleanDoneText: "Recordern tar nu bort det i bakgrunden. På en stor databas kan det ta en timme – följ det på Översikt. Startar Home Assistant om under tiden fortsätter den efteråt.",
@@ -607,6 +631,12 @@ const SV = {
 };
 
 const NL = {
+  repackAfter: "Bestand daarna kleiner maken (comprimeren)",
+  recFreed: "≈ {n} vrijgemaakt in de database",
+  recRepacking: "het bestand wordt kleiner gemaakt …",
+  recSmaller: "het bestand is {n} kleiner",
+  recNoRoom: "te weinig vrije schijfruimte om het bestand kleiner te maken",
+  repackNow: "Bestand kleiner maken",
   cleaningTitle: "Opruimen bezig · {p} %",
   cleaningText: "De recorder werkt op de achtergrond – bij een grote database kan dat een uur duren. Herstart Home Assistant liever niet ondertussen (doe je dat, dan gaat het daarna verder).",
   cleanDoneText: "De recorder verwijdert het nu op de achtergrond. Bij een grote database kan dat een uur duren – volg het op Overzicht. Herstart Home Assistant ondertussen, dan gaat het daarna verder.",
@@ -760,6 +790,7 @@ class EnergyDoctorPanel extends HTMLElement {
     this.query = "";
     this.limit = 10;
     this.backup = true;
+    this.repack = true;
     this.message = "";
     this.aiText = "";
   }
@@ -993,9 +1024,20 @@ class EnergyDoctorPanel extends HTMLElement {
       filter: () => this.t("recFilter", { n: r.entities.length }),
       cleanup: () => this.t("recClean", { n: r.deleted.length + r.trim.length }),
     }[r.kind] || (() => r.kind))();
+    const extra = (r) => {
+      if (r.kind !== "cleanup") return "";
+      const bits = [];
+      if (r.freed) bits.push(this.t("recFreed", { n: this.bytes(r.freed) }));
+      if (r.repack_skipped) bits.push(this.t("recNoRoom"));
+      else if (r.repacking) bits.push(this.t("recRepacking"));
+      else if (r.saved) bits.push(this.t("recSmaller", { n: this.bytes(r.saved) }));
+      return bits.length ? ` · ${esc(bits.join(" · "))}` : "";
+    };
+    const action = (r) => r.kind !== "cleanup"
+      ? (r.undone ? `<span class="muted small">${this.t("undone")}</span>` : `<button class="soft" data-act="undo" data-id="${r.id}">${this.t("undo")}</button>`)
+      : r.finished && !r.repacking && !r.saved && !r.repack_skipped ? `<button class="soft" data-act="repackNow" data-id="${r.id}">${this.t("repackNow")}</button>` : "";
     const row = (r) => `<div class="irow"><div class="grow"><div class="name">${esc(label(r))}</div>
-        <div class="muted small">${esc(this.when(r.at))}${r.saved ? ` · ${esc(this.t("recSaved", { n: this.bytes(r.saved) }))}` : ""}</div></div>
-        ${r.kind !== "cleanup" ? (r.undone ? `<span class="muted small">${this.t("undone")}</span>` : `<button class="soft" data-act="undo" data-id="${r.id}">${this.t("undo")}</button>`) : ""}</div>`;
+        <div class="muted small">${esc(this.when(r.at))}${extra(r)}</div></div>${action(r)}</div>`;
     return `<div class="card"><div class="head"><b>${this.t("recent")}</b></div>${list.map(row).join("")}</div>`;
   }
 
@@ -1248,7 +1290,8 @@ class EnergyDoctorPanel extends HTMLElement {
       ${items.length ? `<details class="card clist"><summary><span class="grow"><b>${this.t("seeWhat", { n: items.length })}</b></span><ha-icon icon="mdi:chevron-down"></ha-icon></summary>
         <div class="cscroll">${items.map(row).join("")}</div></details>` : ""}
       <div class="card warncard"><ha-icon icon="mdi:shield-alert-outline"></ha-icon><div class="grow"><span>${this.t("cleanWarn")}</span>
-        ${this.settings.backup ? `<label class="irow pick nob"><input type="checkbox" id="backup" ${this.backup ? "checked" : ""}><span class="box"></span><span class="grow">${this.t("backupFirst")}</span></label>` : `<br><a href="/config/backup" target="_top">${this.t("makeBackup")}</a>`}</div></div>
+        ${this.settings.backup ? `<label class="irow pick nob"><input type="checkbox" id="backup" ${this.backup ? "checked" : ""}><span class="box"></span><span class="grow">${this.t("backupFirst")}</span></label>` : `<br><a href="/config/backup" target="_top">${this.t("makeBackup")}</a>`}
+        <label class="irow pick nob"><input type="checkbox" id="repack" ${this.repack ? "checked" : ""}><span class="box"></span><span class="grow">${this.t("repackAfter")}</span></label></div></div>
       <div class="actions"><button class="ghost" data-act="tabs">${this.t("back")}</button>
         <button class="primary" data-act="cleanDo">${s.bytes ? this.t("cleanDo", { n: this.bytes(s.bytes) }) : this.t("cleanup")}</button></div>`;
   }
@@ -1302,6 +1345,8 @@ class EnergyDoctorPanel extends HTMLElement {
     check("input[data-meter]", this.mpicked, "meter");
     const backup = root.getElementById("backup");
     if (backup) backup.addEventListener("change", () => (this.backup = backup.checked));
+    const repack = root.getElementById("repack");
+    if (repack) repack.addEventListener("change", () => (this.repack = repack.checked));
     const q = root.getElementById("q");
     if (q) q.addEventListener("input", () => {
       this.query = q.value;
@@ -1392,7 +1437,7 @@ class EnergyDoctorPanel extends HTMLElement {
         }
         this.workingText = [this.t("cleaning"), ""];
         this.render();
-        return this.ws("cleanup", { deleted: s.deleted, trim: s.trim, keep_days: s.keep_days, backup: false });
+        return this.ws("cleanup", { deleted: s.deleted, trim: s.trim, keep_days: s.keep_days, backup: false, repack: this.repack });
       }, this.t("cleanDone"), this.t("cleanDoneText"));
     } else if (a === "fixPicked") {
       const ids = [...this.picked];
@@ -1408,6 +1453,8 @@ class EnergyDoctorPanel extends HTMLElement {
     } else if (a === "addMeters") {
       const ids = [...this.mpicked];
       this.run(async () => ({ ...(await this.ws("add_to_energy", { statistics: ids })), undoable: true }), (r) => this.t("addedN", { n: r.added }));
+    } else if (a === "repackNow") {
+      this.run(() => this.ws("repack", { record: d.id }), this.t("recRepacking"));
     } else if (a === "undo") {
       this.run(() => this.ws("undo", { record: d.id }), this.t("undone"));
     } else if (a === "toggleRow") {

@@ -15,7 +15,7 @@ from .doctor import Doctor
 
 @callback
 def async_setup(hass: HomeAssistant) -> None:
-    for command in (ws_overview, ws_fix_energy, ws_cleanup, ws_history, ws_undo, ws_rates, ws_set_rates, ws_explain, ws_settings, ws_energy_extra, ws_fix_validation, ws_add_to_energy, ws_set_settings, ws_backup, ws_stop_saving):
+    for command in (ws_overview, ws_fix_energy, ws_cleanup, ws_history, ws_undo, ws_rates, ws_set_rates, ws_explain, ws_settings, ws_energy_extra, ws_fix_validation, ws_add_to_energy, ws_set_settings, ws_backup, ws_stop_saving, ws_repack):
         websocket_api.async_register_command(hass, command)
 
 
@@ -56,6 +56,7 @@ async def ws_fix_energy(hass: HomeAssistant, connection: websocket_api.ActiveCon
         vol.Optional("trim", default=[]): [str],
         vol.Optional("keep_days", default=3): vol.All(int, vol.Range(min=0, max=365)),
         vol.Optional("backup", default=False): bool,
+        vol.Optional("repack", default=True): bool,
     }
 )
 @websocket_api.require_admin
@@ -63,7 +64,7 @@ async def ws_fix_energy(hass: HomeAssistant, connection: websocket_api.ActiveCon
 async def ws_cleanup(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
     if (doctor := _doctor(hass)) is None:
         return _not_loaded(connection, msg)
-    connection.send_result(msg["id"], await doctor.async_cleanup(msg["deleted"], msg["trim"], msg["keep_days"], msg["backup"]))
+    connection.send_result(msg["id"], await doctor.async_cleanup(msg["deleted"], msg["trim"], msg["keep_days"], msg["backup"], msg["repack"]))
 
 
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/history"})
@@ -200,3 +201,19 @@ async def ws_stop_saving(hass: HomeAssistant, connection: websocket_api.ActiveCo
     if (doctor := _doctor(hass)) is None:
         return _not_loaded(connection, msg)
     connection.send_result(msg["id"], await doctor.async_stop_saving(msg["entities"]))
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/repack", vol.Required("record"): str})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_repack(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Make the file smaller now, for a clean-up that is done but not repacked."""
+    if (doctor := _doctor(hass)) is None:
+        return _not_loaded(connection, msg)
+    record = next((r for r in doctor.history if r["id"] == msg["record"] and r["kind"] == "cleanup"), None)
+    if record is None:
+        connection.send_error(msg["id"], "not_found", "No such clean-up")
+        return
+    record.pop("repacked", None)
+    await doctor._async_repack(record)
+    connection.send_result(msg["id"], {"repacking": record.get("repacked") is False, "skipped": record.get("repack_skipped")})

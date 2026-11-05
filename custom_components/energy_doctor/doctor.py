@@ -410,7 +410,7 @@ class Doctor:
         return True
 
     async def async_cleanup(
-        self, deleted: list[str], trim: list[str], keep_days: int, backup: bool = False
+        self, deleted: list[str], trim: list[str], keep_days: int, backup: bool = False, repack: bool = True
     ) -> dict[str, Any]:
         """Remove history through the recorder's own purge. This can't be undone, so a backup can be made first."""
         hass = self.hass
@@ -427,6 +427,8 @@ class Doctor:
             "size_before": (self._cache[1]["size"] if self._cache else None),
             "deleted": deleted, "trim": trim, "keep_days": keep_days, "undone": False,
             "rows_before": rows_before, "rows_after": rows_after, "finished": not rows_before,
+            # Make the file smaller once the rows are gone, so the user sees the space come back.
+            "repack": repack, "per_row": self._per_row,
         }
         await self._async_purge(record)
         if deleted:
@@ -452,6 +454,27 @@ class Doctor:
                 "recorder", "purge_entities",
                 {"entity_id": record["trim"], "keep_days": record["keep_days"]}, blocking=True,
             )
+
+    async def _async_repack(self, record: dict[str, Any]) -> None:
+        """The recorder's own repack (VACUUM for SQLite, OPTIMIZE TABLE for MariaDB/MySQL), once, after a clean-up."""
+        if record.get("repacked") is not None:
+            return
+        instance = get_instance(self.hass)
+        size = await instance.async_add_executor_job(analysis.db_size, self.hass)
+        free = self._cache[1].get("free") if self._cache else None
+        if instance.db_url.startswith(analysis.SQLITE) and size and free is not None and free < size * 1.1:
+            record["repacked"] = False
+            record["repack_skipped"] = "disk"  # SQLite needs as much free space as the database to repack
+            self._save()
+            return
+        record["repacked"] = False
+        record["size_before_repack"] = size
+        self._save()
+        await self.hass.services.async_call(
+            "recorder", "purge", {"keep_days": instance.keep_days, "repack": True, "apply_filter": False}, blocking=True
+        )
+        record["repack_started"] = time.time()
+        self._save()
 
     async def async_resume_cleanups(self) -> None:
         """At start: queue unfinished clean-ups of the last day again."""
@@ -483,6 +506,9 @@ class Doctor:
         if progress >= 0.97 or now <= after * 1.05:
             for r in open_:
                 r["finished"] = True
+                r["rows_removed"] = max(0, r["rows_before"] - sum(entities.get(e, {}).get("rows", 0) for e in r["deleted"] + r["trim"]))
+            if any(r.get("repack") for r in open_):
+                self.hass.async_create_task(self._async_repack(open_[-1]))
             self._save()
             return None
         return {"id": open_[-1]["id"], "progress": round(progress, 3), "targets": targets, "at": open_[0]["at"]}
@@ -495,8 +521,21 @@ class Doctor:
         result = []
         for record in reversed(self.history):
             item = dict(record)
-            if record["kind"] == "cleanup" and record.get("size_before") and now:
-                item["saved"] = max(0, record["size_before"] - now)
+            if record["kind"] == "cleanup":
+                # Freed inside the database at once; the file itself only shrinks after the repack.
+                if record.get("finished") and "rows_removed" not in record and record.get("rows_before") and self._all:
+                    record["rows_removed"] = max(0, record["rows_before"] - sum(
+                        self._all.get(e, {}).get("rows", 0) for e in record["deleted"] + record["trim"]))
+                    self._save()
+                if record.get("rows_removed"):
+                    item["freed"] = round(record["rows_removed"] * record.get("per_row", self._per_row))
+                before = record.get("size_before_repack") or record.get("size_before")
+                if before and now and before - now > 1_000_000:
+                    item["saved"] = before - now
+                    if record.get("repacked") is False and record.get("size_before_repack"):
+                        record["repacked"] = True
+                        self._save()
+                item["repacking"] = record.get("repacked") is False and not record.get("repack_skipped")
             result.append(item)
         return result
 
