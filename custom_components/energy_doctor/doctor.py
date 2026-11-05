@@ -461,19 +461,31 @@ class Doctor:
 
     def _cleaning(self, entities: dict[str, dict[str, Any]]) -> dict[str, Any] | None:
         """How far the newest unfinished clean-up has come, from the rows its entities still have."""
-        open_ = [r for r in self.history if r["kind"] == "cleanup" and not r.get("finished") and r.get("rows_before")]
+        open_ = [r for r in self.history if r["kind"] == "cleanup" and not r.get("finished") and time.time() - r["at"] < 2 * 86400]
         if not open_:
             return None
-        record = open_[-1]
-        targets = record["deleted"] + record["trim"]
+        for record in open_:
+            if "rows_before" not in record:
+                # A clean-up from before 0.4.3: count from now on.
+                targets = record["deleted"] + record["trim"]
+                record["rows_before"] = sum(entities.get(e, {}).get("rows", 0) for e in targets)
+                record["rows_after"] = sum(entities.get(e, {}).get("per_day", 0) * record["keep_days"] for e in record["trim"])
+                self._save()
+        open_ = [r for r in open_ if r["rows_before"]]
+        if not open_:
+            return None
+        # One picture for all clean-ups still running.
+        targets = sorted({e for r in open_ for e in r["deleted"] + r["trim"]})
+        before = sum(r["rows_before"] for r in open_)
+        after = sum(r["rows_after"] for r in open_)
         now = sum(entities.get(e, {}).get("rows", 0) for e in targets)
-        to_go = max(1, record["rows_before"] - record["rows_after"])
-        progress = min(1.0, max(0.0, (record["rows_before"] - now) / to_go))
-        if progress >= 0.97 or time.time() - record["at"] > 2 * 86400:
-            record["finished"] = True
+        progress = min(1.0, max(0.0, (before - now) / max(1, before - after)))
+        if progress >= 0.97 or now <= after * 1.05:
+            for r in open_:
+                r["finished"] = True
             self._save()
             return None
-        return {"id": record["id"], "progress": round(progress, 3), "targets": targets, "at": record["at"]}
+        return {"id": open_[-1]["id"], "progress": round(progress, 3), "targets": targets, "at": open_[0]["at"]}
 
     # ---------- history ----------
 
