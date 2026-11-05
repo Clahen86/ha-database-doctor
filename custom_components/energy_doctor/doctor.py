@@ -12,7 +12,7 @@ from uuid import uuid4
 from homeassistant.components import persistent_notification
 from homeassistant.components.recorder import get_instance
 from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, callback
-from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.event import async_call_later, async_track_time_change, async_track_time_interval
 from homeassistant.helpers.storage import Store
 
@@ -24,6 +24,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "auto_new": True,  # new devices get the chosen levels
     "retention": {},  # group -> days of detail to keep (graphs and hourly statistics stay)
     "exclude": [],  # entities the user wants to stop saving: shown as the lines for configuration.yaml
+    "protect": [],  # entities never suggested for clean-up, trimming or saving less often ("Never touch")
     "notify_energy": True,  # a notification when new wrong numbers turn up in Energy
     "weekly_report": False,  # a short report on Mondays
 }
@@ -107,7 +108,7 @@ class Doctor:
         for group, days in rules.items():
             ids = [
                 e["entity_id"] for e in self._all.values()
-                if e["group"] == group and not e["deleted"] and not any(u.get("history") for u in e["used_in"])
+                if e["group"] == group and not e["deleted"] and not e.get("history_used") and not e.get("protected")
             ]
             if ids:
                 await self.hass.services.async_call(
@@ -191,9 +192,14 @@ class Doctor:
             if not fresh and self._cache and time.time() - self._cache[0] < CACHE_SECONDS:
                 return self._cache[1]
             result = await analysis.async_analyse(self.hass)
-            uses = await usage.async_uses(self.hass)
+            uses, seen = await usage.async_uses(self.hass)
+            protect = set(self.settings.get("protect") or [])
             for entity in result["entities"]:
                 entity["used_in"] = uses.get(entity["entity_id"], [])
+                # Its history is needed (a graph, Energy, a statistics helper, code that reads it) - or kept by the user.
+                entity["history_used"] = any(u.get("history") for u in entity["used_in"])
+                entity["protected"] = entity["entity_id"] in protect
+            result["usage"] = seen
             self._all = {e["entity_id"]: e for e in result["entities"]}
             self._per_row = (result["size"] / result["rows"]) if result["size"] and result["rows"] else 300.0
             stats, costs = await energy.async_energy_statistics(self.hass)
@@ -227,7 +233,8 @@ class Doctor:
             if e["deleted"]:
                 deleted.append(e["entity_id"])
                 saved += e["bytes"]
-            elif not e["used_in"] and e["per_day"] >= BUSY_PER_DAY and e["group"] != "energy":
+            elif not e["history_used"] and not e["protected"] and e["per_day"] >= BUSY_PER_DAY:
+                # Automations and templates only need the value now, so old history of a busy entity can go.
                 keep = e["per_day"] * TRIM_KEEP_DAYS * per_row
                 if e["bytes"] > keep:
                     trim.append(e["entity_id"])
@@ -276,6 +283,27 @@ class Doctor:
             self.history.append(record)
             self._save()
         return {"id": record["id"], "added": len(added)}
+
+    # ---------- stop saving ----------
+
+    async def async_stop_saving(self, entity_ids: list[str]) -> dict[str, Any]:
+        """Zigbee2MQTT values stop at their source with one tap; the rest goes on the list for configuration.yaml."""
+        changes = await rates.async_filter(self.hass, entity_ids) if "mqtt" in self.hass.config.components else []
+        stopped = {
+            e for e in entity_ids
+            if (entry := er.async_get(self.hass).async_get(e)) and rates.z2m_attribute(entry)
+            and any(c["ieee"] in (entry.unique_id or "") for c in changes)
+        }
+        rest = [e for e in entity_ids if e not in stopped]
+        if rest:
+            self.settings["exclude"] = sorted(set(self.settings["exclude"]) | set(rest))
+        record = {"id": uuid4().hex, "at": time.time(), "kind": "filter", "changes": changes,
+                  "entities": sorted(stopped), "undone": False}
+        if changes:
+            self.history.append(record)
+        self._save()
+        self._cache = None
+        return {"id": record["id"], "stopped": len(stopped), "listed": len(rest), "undoable": bool(changes)}
 
     # ---------- AI ----------
 
@@ -418,6 +446,8 @@ class Doctor:
             return False  # a clean-up removed data; only a backup brings it back
         if record["kind"] == "rates":
             await rates.async_undo(self.hass, record["done"])
+        elif record["kind"] == "filter":
+            await rates.async_unfilter(self.hass, record["changes"])
         elif record["kind"] == "energy_devices":
             await energy.async_add_to_energy(self.hass, record["added"], back=True)
         else:

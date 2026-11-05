@@ -105,7 +105,9 @@ async def test_analysis_counts_rows_and_finds_deleted_and_busy_unused(recorder_m
     assert by_id["sensor.old_thing"]["deleted"]
     suggestion = overview["suggestion"]
     assert suggestion["deleted"] == ["sensor.old_thing"]
-    assert "sensor.signal_linkquality" in suggestion["trim"] and "sensor.stue_temperatur" not in suggestion["trim"]
+    # An automation only needs the value now, so even its old history can be trimmed; only history users are kept.
+    assert "sensor.signal_linkquality" in suggestion["trim"] and "sensor.stue_temperatur" in suggestion["trim"]
+    assert not by_id["sensor.stue_temperatur"]["history_used"]
 
     result = await doctor.async_cleanup(suggestion["deleted"], [], 0)
     await async_wait_recording_done(hass)
@@ -250,3 +252,30 @@ async def test_opens_at_once_with_the_last_picture(recorder_mock, hass: HomeAssi
     await other.async_load()
     assert (await other.async_overview(allow_stale=True))["at"] == first["at"]
     other.async_stop()
+
+
+async def test_reads_yaml_and_outside_code_for_history(recorder_mock, hass: HomeAssistant, doctor, tmp_path) -> None:
+    """A YAML statistics sensor and an AppDaemon get_history read history; a template only the value; protect wins."""
+    hass.config.config_dir = str(tmp_path)
+    (tmp_path / "configuration.yaml").write_text(
+        "sensor:\n  - platform: statistics\n    name: Snit\n    entity_id: sensor.ude_temp\n    state_characteristic: mean\n"
+        "template:\n  - sensor:\n      - name: Dobbelt\n        state: \"{{ states('sensor.stue_temp') | float * 2 }}\"\n"
+        "# sensor.kun_kommentar is only mentioned in a comment\n"
+    )
+    (tmp_path / "appdaemon" / "apps").mkdir(parents=True)
+    (tmp_path / "appdaemon" / "apps" / "app.py").write_text(
+        "WEATHER = 'weather.hjem'\nclass A:\n    def run(self):\n        h = self.get_history(WEATHER, days=1)\n"
+        "        x = self.get_state('sensor.kun_vaerdi')\n"
+    )
+    for e in ("sensor.ude_temp", "sensor.stue_temp", "weather.hjem", "sensor.kun_vaerdi", "sensor.kun_kommentar"):
+        hass.states.async_set(e, "1")
+    await async_wait_recording_done(hass)
+    doctor.set_settings({"protect": ["sensor.kun_kommentar"]})
+    overview = await doctor.async_overview(fresh=True)
+    by_id = {e["entity_id"]: e for e in overview["entities"]}
+    assert by_id["sensor.ude_temp"]["history_used"]
+    assert by_id["sensor.stue_temp"]["used_in"] and not by_id["sensor.stue_temp"]["history_used"]
+    assert by_id["weather.hjem"]["history_used"]
+    assert by_id["sensor.kun_vaerdi"]["used_in"][0]["kind"] == "outside" and not by_id["sensor.kun_vaerdi"]["history_used"]
+    assert not by_id["sensor.kun_kommentar"]["used_in"] and by_id["sensor.kun_kommentar"]["protected"]
+    assert "appdaemon" in overview["usage"]["outside_read"]

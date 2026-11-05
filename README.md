@@ -34,7 +34,11 @@ Home Assistant records everything, and two things go wrong over time: a meter th
 
 <p><img src="docs/panel-data.png" alt="Data: what takes up the most, per device, with where it is used" width="300"></p>
 
-One row per device, with a clear status – *Can be cleaned*, *Saves a lot*, *Used – keep* or *Deleted* – and one button that does the right thing. Tap a row to see each entity, how often it saves and where it is used: automations, scripts, scenes, graphs, dashboards, the energy dashboard, helpers and your YAML files. Filter and search when the list is long.
+One row per device, with a clear status – *History used – keep*, *Used – only its value*, *Can be cleaned*, *Saves a lot* or *Deleted* – and one button that does the right thing. Tap a row to see each entity, how often it saves and where it is used: automations, scripts, scenes, graphs, dashboards, the energy dashboard, helpers and your YAML files. Filter and search when the list is long.
+
+Energy Doctor reads how each entity is used, not just where its name appears: the YAML configuration is loaded the way Home Assistant loads it (with `!include` and packages), and only what really reads the history – graphs, the energy dashboard, `statistics`, `history_stats` and `filter` sensors, and code like AppDaemon's `get_history` – keeps the history. Automations and templates only need the value now, so their old history can go. Code in add-ons that Home Assistant can't read (for example AppDaemon on Home Assistant OS) is pointed out, and **Never touch** keeps any entity out of every suggestion.
+
+**Stop saving** with one tap: for Zigbee2MQTT devices the value is stopped at its source (Zigbee2MQTT's own *filtered_attributes*), so nothing new is recorded and the entity keeps its last value.
 
 ### Save less often
 

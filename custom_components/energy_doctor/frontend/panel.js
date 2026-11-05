@@ -1,6 +1,16 @@
 // Energy Doctor panel: tabs Overview · Energy · Data · Settings.
 
 const EN = {
+  st2: {"history": "History used – keep", "value": "Used – only its value", "value_busy": "Used – old history can go", "protected": "Never touch"},
+  protectOn: "Never touch",
+  protectOff: "Allow again",
+  trimRow: "Clear old history",
+  historyTag: "history",
+  unseen: "Energy Doctor can't see the files of {list}. If they read history, mark those entities “Never touch”.",
+  outsideRead: "Also read: {list}",
+  stopDone: "{s} stopped at the source in Zigbee2MQTT",
+  stopListed: "{l} put on the list “Stop saving”",
+  recFilter: "Stop saving: {n} values stopped in Zigbee2MQTT",
   lower: "Lower",
   busyOnly: "Saves a lot",
   loweredOne: "{n} saves less often now",
@@ -155,6 +165,16 @@ const EN = {
 };
 
 const DA = {
+  st2: {"history": "Historik bruges – behold", "value": "Bruges – kun værdien", "value_busy": "Bruges – gammel historik kan ryddes", "protected": "Rør aldrig"},
+  protectOn: "Rør aldrig",
+  protectOff: "Må røres igen",
+  trimRow: "Ryd gammel historik",
+  historyTag: "historik",
+  unseen: "Energi-doktor kan ikke se filerne fra {list}. Læser de historik, så markér de entiteter som “Rør aldrig”.",
+  outsideRead: "Læser også: {list}",
+  stopDone: "{s} stoppet ved kilden i Zigbee2MQTT",
+  stopListed: "{l} lagt på listen “Stop med at gemme”",
+  recFilter: "Gem ikke: {n} værdier stoppet i Zigbee2MQTT",
   lower: "Sæt ned",
   busyOnly: "Gemmer meget",
   loweredOne: "{n} gemmer sjældnere nu",
@@ -309,6 +329,16 @@ const DA = {
 };
 
 const DE = {
+  st2: {"history": "Verlauf genutzt – behalten", "value": "Genutzt – nur der Wert", "value_busy": "Genutzt – alter Verlauf kann weg", "protected": "Nie anfassen"},
+  protectOn: "Nie anfassen",
+  protectOff: "Wieder erlauben",
+  trimRow: "Alten Verlauf löschen",
+  historyTag: "Verlauf",
+  unseen: "Energie-Doktor kann die Dateien von {list} nicht sehen. Lesen sie Verlauf, markiere diese Entitäten mit „Nie anfassen“.",
+  outsideRead: "Liest auch: {list}",
+  stopDone: "{s} an der Quelle in Zigbee2MQTT gestoppt",
+  stopListed: "{l} auf die Liste „Nicht mehr speichern“ gesetzt",
+  recFilter: "Nicht speichern: {n} Werte in Zigbee2MQTT gestoppt",
   lower: "Reduzieren",
   busyOnly: "Speichert viel",
   loweredOne: "{n} speichert jetzt seltener",
@@ -410,6 +440,16 @@ const DE = {
 };
 
 const SV = {
+  st2: {"history": "Historik används – behåll", "value": "Används – bara värdet", "value_busy": "Används – gammal historik kan tas bort", "protected": "Rör aldrig"},
+  protectOn: "Rör aldrig",
+  protectOff: "Tillåt igen",
+  trimRow: "Rensa gammal historik",
+  historyTag: "historik",
+  unseen: "Energidoktorn kan inte se filerna från {list}. Läser de historik, markera de entiteterna som ”Rör aldrig”.",
+  outsideRead: "Läser också: {list}",
+  stopDone: "{s} stoppade vid källan i Zigbee2MQTT",
+  stopListed: "{l} lagda på listan ”Sluta spara”",
+  recFilter: "Spara inte: {n} värden stoppade i Zigbee2MQTT",
   lower: "Sänk",
   busyOnly: "Sparar mycket",
   loweredOne: "{n} sparar mer sällan nu",
@@ -511,6 +551,16 @@ const SV = {
 };
 
 const NL = {
+  st2: {"history": "Geschiedenis gebruikt – behouden", "value": "Gebruikt – alleen de waarde", "value_busy": "Gebruikt – oude geschiedenis kan weg", "protected": "Nooit aanraken"},
+  protectOn: "Nooit aanraken",
+  protectOff: "Weer toestaan",
+  trimRow: "Oude geschiedenis wissen",
+  historyTag: "geschiedenis",
+  unseen: "Energiedokter kan de bestanden van {list} niet zien. Lezen ze geschiedenis, markeer die entiteiten dan als ‘Nooit aanraken’.",
+  outsideRead: "Leest ook: {list}",
+  stopDone: "{s} gestopt bij de bron in Zigbee2MQTT",
+  stopListed: "{l} op de lijst ‘Stoppen met opslaan’ gezet",
+  recFilter: "Niet opslaan: {n} waarden gestopt in Zigbee2MQTT",
   lower: "Verlagen",
   busyOnly: "Slaat veel op",
   loweredOne: "{n} slaat nu minder vaak op",
@@ -614,7 +664,7 @@ const NL = {
 const TEXT = { en: EN, da: DA, de: DE, sv: SV, nl: NL };
 const LOCALE = { en: "en-GB", da: "da-DK", de: "de-DE", sv: "sv-SE", nl: "nl-NL" };
 const COLORS = { sensors: "#0b6fa4", energy: "#f59e0b", lights: "#22a06b", signals: "#8b5cf6", other: "#94a3b8" };
-const USE_ICON = { automation: "mdi:robot", script: "mdi:script-text", scene: "mdi:palette", graph: "mdi:chart-line", dashboard: "mdi:view-dashboard", energy: "mdi:lightning-bolt", helper: "mdi:tools", yaml: "mdi:file-code-outline" };
+const USE_ICON = { outside: "mdi:application-cog", automation: "mdi:robot", script: "mdi:script-text", scene: "mdi:palette", graph: "mdi:chart-line", dashboard: "mdi:view-dashboard", energy: "mdi:lightning-bolt", helper: "mdi:tools", yaml: "mdi:file-code-outline" };
 const GROUP_ICON = { climate: "mdi:thermometer", meters: "mdi:lightning-bolt", sensors: "mdi:motion-sensor", signals: "mdi:signal" };
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const SIGNAL = /(linkquality|_lqi|rssi)$/;
@@ -843,6 +893,7 @@ class EnergyDoctorPanel extends HTMLElement {
       energy: () => this.t("recEnergy", { n: r.issues.length }),
       rates: () => this.t("recRates", { n: r.done.throttles.length + r.done.disabled.length + r.done.enabled.length }),
       energy_devices: () => this.t("recDevices", { n: r.added.length }),
+      filter: () => this.t("recFilter", { n: r.entities.length }),
       cleanup: () => this.t("recClean", { n: r.deleted.length + r.trim.length }),
     }[r.kind] || (() => r.kind))();
     const row = (r) => `<div class="irow"><div class="grow"><div class="name">${esc(label(r))}</div>
@@ -949,7 +1000,10 @@ class EnergyDoctorPanel extends HTMLElement {
       r.per_day = r.entities.reduce((a, e) => a + e.per_day, 0);
       r.deleted = r.entities.every((e) => e.deleted);
       r.used = r.entities.some((e) => e.used_in.length);
-      r.status = r.deleted ? "deleted" : r.used ? "used" : r.per_day >= 500 ? "busy" : "clean";
+      r.history = r.entities.some((e) => e.history_used);
+      r.protected = r.entities.some((e) => e.protected);
+      const busy = r.per_day >= 500;
+      r.status = r.deleted ? "deleted" : r.protected ? "protected" : r.history ? "history" : r.used ? (busy ? "value_busy" : "value") : busy ? "busy" : "clean";
       return r;
     }).sort((a, b) => b.bytes - a.bytes);
   }
@@ -968,19 +1022,21 @@ class EnergyDoctorPanel extends HTMLElement {
   dataRow(r, max) {
     const open = this.openRows.has(r.key);
     const pct = Math.max(2, Math.round((r.bytes / (max || 1)) * 100));
-    const pill = { deleted: "grey", used: "blue", busy: "amber", clean: "green" }[r.status];
+    const pill = { deleted: "grey", history: "blue", protected: "grey", value: "blue", value_busy: "amber", busy: "amber", clean: "green" }[r.status];
     const excluded = new Set(this.settings.exclude || []);
     const stop = !r.used && !r.deleted && !r.entities.every((e) => excluded.has(e.entity_id));
-    const lower = r.status === "busy" || r.status === "used" ? this.lowerable(r) : null;
+    const lower = !r.protected && ["busy", "value", "value_busy"].includes(r.status) ? this.lowerable(r) : null;
     const action = r.deleted
       ? `<button class="soft redbg" data-act="cleanRow" data-key="${esc(r.key)}">${this.t("remove")}</button>`
+      : r.status === "value_busy" ? `<button class="soft" data-act="trimRow" data-key="${esc(r.key)}">${this.t("trimRow")}</button>${lower ? `<button class="soft" data-act="lowerRow" data-key="${esc(r.key)}">${this.t("lower")}</button>` : ""}`
       : lower ? `<button class="soft" data-act="lowerRow" data-key="${esc(r.key)}">${this.t("lower")}</button>`
-      : stop ? `<button class="soft" data-act="stopRow" data-key="${esc(r.key)}">${this.t("stopSaving")}</button>` : "";
-    const statusText = r.status === "busy" && !lower ? this.t("busyOnly") : this.t(`status.${r.status}`);
+      : stop && !r.protected ? `<button class="soft" data-act="stopRow" data-key="${esc(r.key)}">${this.t("stopSaving")}</button>` : "";
+    const statusText = r.status === "busy" && !lower ? this.t("busyOnly") : ["clean", "busy", "deleted"].includes(r.status) ? this.t(`status.${r.status}`) : this.t(`st2.${r.status}`);
     const details = open ? r.entities.map((e) => `<div class="sub">
         <div class="line"><span>${esc(e.name)}</span><span class="nowrap muted">${this.bytes(e.bytes)}</span></div>
         <div class="mono small muted">${esc(e.entity_id)} · ${esc(this.t("rows", { n: this.num(e.rows, 0), d: this.num(e.per_day, 0) }))}</div>
-        ${e.used_in.length ? `<div class="chips">${e.used_in.slice(0, 6).map((u) => `<span class="chip"><ha-icon icon="${USE_ICON[u.kind] || "mdi:link"}"></ha-icon>${esc(u.kind === "energy" ? this.t("groups.energy") : u.name)}</span>`).join("")}</div>` : `<div class="small muted">${this.t("unused")}</div>`}
+        ${e.used_in.length ? `<div class="chips">${e.used_in.slice(0, 8).map((u) => `<span class="chip ${u.history ? "hist" : ""}"><ha-icon icon="${USE_ICON[u.kind] || "mdi:link"}"></ha-icon>${esc(u.kind === "energy" ? this.t("groups.energy") : u.name)}${u.history ? ` · ${this.t("historyTag")}` : ""}</span>`).join("")}</div>` : `<div class="small muted">${this.t("unused")}</div>`}
+        ${!e.deleted ? `<button class="link small" data-act="protect" data-id="${esc(e.entity_id)}">${e.protected ? this.t("protectOff") : this.t("protectOn")}</button>` : ""}
       </div>`).join("") : "";
     return `<div class="erow">
       <button class="rowhead" data-act="toggleRow" data-key="${esc(r.key)}" aria-expanded="${open}">
@@ -996,11 +1052,15 @@ class EnergyDoctorPanel extends HTMLElement {
   dataTab() {
     const q = this.query.trim().toLowerCase();
     const all = this.rows();
-    const inFilter = (r, f) => f === "all" || (f === "clean" ? ["clean", "busy"].includes(r.status) : f === r.status);
+    const groupsOf = { clean: ["clean", "busy", "value_busy"], used: ["history", "value", "value_busy", "protected"], deleted: ["deleted"] };
+    const inFilter = (r, f) => f === "all" || groupsOf[f].includes(r.status);
     const list = all.filter((r) => inFilter(r, this.filter) && (!q || r.name.toLowerCase().includes(q) || r.entities.some((e) => e.entity_id.includes(q))));
     const max = list[0]?.bytes || 1;
     const chips = ["all", "clean", "used", "deleted"].map((f) => `<button class="fchip ${this.filter === f ? "on" : ""}" data-act="filter" data-filter="${f}">${this.t(`filters.${f}`)} <span>${all.filter((r) => inFilter(r, f)).length}</span></button>`).join("");
-    return `<div class="card"><h2>${this.t("dataTitle")}</h2>
+    const u = this.data.usage || {};
+    const unseen = (u.unseen_addons || []).length ? `<div class="card warncard"><ha-icon icon="mdi:eye-off-outline"></ha-icon><div class="grow small">${esc(this.t("unseen", { list: u.unseen_addons.join(", ") }))}</div></div>` : "";
+    return `${unseen}<div class="card"><h2>${this.t("dataTitle")}</h2>
+        ${(u.outside_read || []).length ? `<div class="small muted">${esc(this.t("outsideRead", { list: u.outside_read.join(", ") }))}</div>` : ""}
         <div class="fchips">${chips}</div>
         <input id="q" class="search" type="search" placeholder="${this.t("search")}" value="${esc(this.query)}" aria-label="${this.t("search")}">
         ${this.toast ? `<p class="small green">${esc(this.toast)}</p>` : ""}
@@ -1242,11 +1302,24 @@ class EnergyDoctorPanel extends HTMLElement {
       this.render();
     } else if (a === "stopRow") {
       const r = this.rowByKey(d.key);
-      const exclude = [...new Set([...(this.settings.exclude || []), ...r.entities.map((e) => e.entity_id)])];
-      this.saveSettings({ exclude }).then(() => {
-        this.toast = this.t("stopAdded");
-        this.render();
-      });
+      const ids = r.entities.filter((e) => !e.used_in.length && !e.protected).map((e) => e.entity_id);
+      this.run(async () => {
+        const res = await this.ws("stop_saving", { entities: ids });
+        this.settings = { ...this.settings, ...(await this.ws("settings")) };
+        return res;
+      }, (res) => [res.stopped ? this.t("stopDone", { s: res.stopped }) : "", res.listed ? this.t("stopListed", { l: res.listed }) : ""].filter(Boolean).join(" · "));
+    } else if (a === "trimRow") {
+      const r = this.rowByKey(d.key);
+      const ids = r.entities.filter((e) => !e.history_used && !e.protected).map((e) => e.entity_id);
+      this.cleanPlan = { deleted: [], trim: ids, keep_days: 3, bytes: 0 };
+      this.view = "clean";
+      this.render();
+    } else if (a === "protect") {
+      const set = new Set(this.settings.protect || []);
+      if (set.has(d.id)) set.delete(d.id);
+      else set.add(d.id);
+      for (const e of this.data.entities) if (e.entity_id === d.id) e.protected = set.has(d.id);
+      this.saveSettings({ protect: [...set] });
     } else if (a === "lowerRow") {
       const r = this.rowByKey(d.key);
       const device = this.lowerable(r);
@@ -1355,6 +1428,7 @@ button{font-family:inherit;cursor:pointer}
 .pill.green{background:#e7f6ee;color:#22663f}.pill.amber{background:#fef0c7;color:#93370d}.pill.blue{background:#e6f2f9;color:#0b4f75}.pill.grey{background:#eef1f4;color:#475467}
 .rowact{display:flex;justify-content:flex-end}
 .sub{margin:8px 0 0 12px;padding:8px 0 8px 12px;border-left:3px solid var(--divider-color,#e8ecf1);display:flex;flex-direction:column;gap:4px}
+.chip.hist{background:#e6f2f9;color:#0b4f75}
 .chips{display:flex;flex-wrap:wrap;gap:6px}.chip{display:inline-flex;align-items:center;gap:4px;background:var(--secondary-background-color,#eef1f4);border-radius:14px;padding:4px 10px 4px 6px;font-size:12px}.chip ha-icon{--mdc-icon-size:16px}
 .fchips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
 .fchip{flex:none;min-height:36px;border-radius:18px;border:1px solid var(--divider-color,#d6dce4);background:var(--card-background-color,#fff);color:var(--primary-text-color);font-size:14px;padding:0 14px}

@@ -15,7 +15,7 @@ from .doctor import Doctor
 
 @callback
 def async_setup(hass: HomeAssistant) -> None:
-    for command in (ws_overview, ws_fix_energy, ws_cleanup, ws_history, ws_undo, ws_rates, ws_set_rates, ws_explain, ws_settings, ws_energy_extra, ws_fix_validation, ws_add_to_energy, ws_set_settings, ws_backup):
+    for command in (ws_overview, ws_fix_energy, ws_cleanup, ws_history, ws_undo, ws_rates, ws_set_rates, ws_explain, ws_settings, ws_energy_extra, ws_fix_validation, ws_add_to_energy, ws_set_settings, ws_backup, ws_stop_saving):
         websocket_api.async_register_command(hass, command)
 
 
@@ -143,6 +143,7 @@ def ws_settings(hass: HomeAssistant, connection: websocket_api.ActiveConnection,
         vol.Optional("auto_new"): bool,
         vol.Optional("retention"): {str: vol.Any(None, vol.All(int, vol.Range(min=1, max=365)))},
         vol.Optional("exclude"): [str],
+        vol.Optional("protect"): [str],
         vol.Optional("notify_energy"): bool,
         vol.Optional("weekly_report"): bool,
     }
@@ -190,3 +191,12 @@ async def ws_backup(hass: HomeAssistant, connection: websocket_api.ActiveConnect
     if (doctor := _doctor(hass)) is None:
         return _not_loaded(connection, msg)
     connection.send_result(msg["id"], {"backup": await doctor.async_backup()})
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/stop_saving", vol.Required("entities"): [str]})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_stop_saving(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    if (doctor := _doctor(hass)) is None:
+        return _not_loaded(connection, msg)
+    connection.send_result(msg["id"], await doctor.async_stop_saving(msg["entities"]))

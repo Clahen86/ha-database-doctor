@@ -57,7 +57,12 @@ def base_topic(hass: HomeAssistant, device: dr.DeviceEntry) -> str:
 
 
 async def async_throttles(hass: HomeAssistant, base: str) -> dict[str, int]:
-    """ieee -> the throttle Zigbee2MQTT has now, from its retained "<base>/bridge/info"."""
+    """ieee -> the throttle Zigbee2MQTT has now."""
+    return {k: int(v.get("throttle") or 0) for k, v in (await async_z2m_devices(hass, base)).items()}
+
+
+async def async_z2m_devices(hass: HomeAssistant, base: str) -> dict[str, dict[str, Any]]:
+    """ieee -> Zigbee2MQTT's own options for the device, from its retained "<base>/bridge/info"."""
     if "mqtt" not in hass.config.components:
         return {}
     from homeassistant.components import mqtt
@@ -81,7 +86,7 @@ async def async_throttles(hass: HomeAssistant, base: str) -> dict[str, int]:
     finally:
         unsubscribe()
     devices = ((info or {}).get("config") or {}).get("devices") or {}
-    return {str(k).lower(): int(v.get("throttle") or 0) for k, v in devices.items() if isinstance(v, dict)}
+    return {str(k).lower(): v for k, v in devices.items() if isinstance(v, dict)}
 
 
 def level_of(throttle: int) -> str:
@@ -159,7 +164,9 @@ async def async_plan(
             "id": device.id, "ieee": address, "base": base, "name": device.name_by_user or device.name,
             "throttle": throttle, "level": level_of(throttle), "per_day": per_day,
             "used": any(entities.get(e.entity_id, {}).get("used_in") for e in own),
-            "override": overrides.get(device.id),
+            # "Never touch" on any of its entities keeps the whole device as it is.
+            "override": "never" if any(entities.get(e.entity_id, {}).get("protected") for e in own)
+            else overrides.get(device.id),
             # Rows a day each level would leave: at most one per entity per throttle period.
             "rows": {lvl: sum(min(entities.get(e.entity_id, {}).get("per_day", 0), 86400 / t if t else 10**9)
                               for e in own) for lvl, t in THROTTLE.items()},
@@ -244,3 +251,55 @@ async def async_undo(hass: HomeAssistant, done: dict[str, Any]) -> None:
     for entity_id in done.get("enabled", []):
         if registry.async_get(entity_id):
             registry.async_update_entity(entity_id, disabled_by=er.RegistryEntryDisabler.USER)
+
+
+# ---------- stop saving a Zigbee2MQTT value at its source ----------
+
+
+def z2m_attribute(entry: er.RegistryEntry) -> str | None:
+    """The Zigbee2MQTT attribute behind an entity ("0x…_linkquality_zigbee2mqtt" -> "linkquality")."""
+    match = re.match(r"^0x[0-9a-f]{16}_(.+)_zigbee2mqtt$", entry.unique_id or "")
+    return match[1] if match else None
+
+
+async def async_filter(hass: HomeAssistant, entity_ids: list[str], stop: bool = True) -> list[dict[str, Any]]:
+    """Make Zigbee2MQTT stop sending these values (its own "filtered_attributes" option), or send them again.
+
+    The entity stays in Home Assistant with its last value; nothing new is recorded. Returns what changed."""
+    from homeassistant.components import mqtt
+
+    registry, devices = er.async_get(hass), dr.async_get(hass)
+    wanted: dict[tuple[str, str], set[str]] = {}
+    for entity_id in entity_ids:
+        entry = registry.async_get(entity_id)
+        device = devices.async_get(entry.device_id) if entry and entry.device_id else None
+        address = ieee(device) if device else None
+        attribute = z2m_attribute(entry) if entry else None
+        if address and attribute:
+            wanted.setdefault((base_topic(hass, device), address), set()).add(attribute)
+    changed = []
+    options_by_base: dict[str, dict[str, dict[str, Any]]] = {}
+    for (base, address), attributes in wanted.items():
+        if base not in options_by_base:
+            options_by_base[base] = await async_z2m_devices(hass, base)
+        before = list(options_by_base[base].get(address, {}).get("filtered_attributes") or [])
+        exact = {f"^{re.escape(a)}$" for a in attributes}
+        after = sorted(set(before) | exact) if stop else [f for f in before if f not in exact]
+        if after == before:
+            continue
+        await mqtt.async_publish(
+            hass, f"{base}/bridge/request/device/options",
+            json.dumps({"id": address, "options": {"filtered_attributes": after}}),
+        )
+        changed.append({"base": base, "ieee": address, "before": before, "after": after})
+    return changed
+
+
+async def async_unfilter(hass: HomeAssistant, changes: list[dict[str, Any]]) -> None:
+    from homeassistant.components import mqtt
+
+    for change in changes:
+        await mqtt.async_publish(
+            hass, f"{change['base']}/bridge/request/device/options",
+            json.dumps({"id": change["ieee"], "options": {"filtered_attributes": change["before"]}}),
+        )
