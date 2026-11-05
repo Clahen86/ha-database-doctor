@@ -1,6 +1,7 @@
 // Energy Doctor panel: tabs Overview · Energy · Data · Settings.
 
 const EN = {
+  vinfo: "Harmless: they are excluded from the recorder on purpose. Home Assistant keeps warning as long as the sensor has a state class – there is no old statistics left to delete.",
   keepRule: "Keep it like this – they keep only {k} days from now on (checked every night)",
   keptPill: "Keeps {k} days",
   unkeep: "Keep everything again",
@@ -188,6 +189,7 @@ const EN = {
 };
 
 const DA = {
+  vinfo: "Ufarligt: de er slået fra i recorderen med vilje. Home Assistant bliver ved med at advare, så længe sensoren har en state class – der er ingen gammel statistik tilbage at slette.",
   keepRule: "Hold det sådan – de beholder kun {k} dage fremover (tjekkes hver nat)",
   keptPill: "Beholder {k} dage",
   unkeep: "Behold alt igen",
@@ -375,6 +377,7 @@ const DA = {
 };
 
 const DE = {
+  vinfo: "Harmlos: Sie sind absichtlich im Recorder ausgeschlossen. Home Assistant warnt, solange der Sensor eine State-Class hat – es gibt keine alte Statistik mehr zu löschen.",
   keepRule: "So beibehalten – künftig nur {k} Tage behalten (jede Nacht geprüft)",
   keptPill: "Behält {k} Tage",
   unkeep: "Wieder alles behalten",
@@ -509,6 +512,7 @@ const DE = {
 };
 
 const SV = {
+  vinfo: "Ofarligt: de är undantagna i recordern med flit. Home Assistant fortsätter varna så länge sensorn har en state class – det finns ingen gammal statistik kvar att ta bort.",
   keepRule: "Behåll så här – de behåller bara {k} dagar framöver (kontrolleras varje natt)",
   keptPill: "Behåller {k} dagar",
   unkeep: "Behåll allt igen",
@@ -643,6 +647,7 @@ const SV = {
 };
 
 const NL = {
+  vinfo: "Onschuldig: ze zijn bewust uitgesloten in de recorder. Home Assistant blijft waarschuwen zolang de sensor een state class heeft – er is geen oude statistiek meer om te verwijderen.",
   keepRule: "Zo houden – ze bewaren voortaan alleen {k} dagen (elke nacht gecontroleerd)",
   keptPill: "Bewaart {k} dagen",
   unkeep: "Weer alles bewaren",
@@ -1108,9 +1113,9 @@ class EnergyDoctorPanel extends HTMLElement {
       const inEnergy = g.items.filter((v) => energy.has(v.statistic_id));
       const free = g.items.filter((v) => !energy.has(v.statistic_id));
       return `<div class="vgroup"><div class="name">${esc(this.t(`vgroups.${g.type}`, { n: g.items.length }))}</div>
-        <div class="small muted">${esc(this.t(`vexplain.${g.type}`))}</div>
-        <div class="small ${inEnergy.length ? "amber" : "green"}">${esc(inEnergy.length ? this.t("vinEnergy", { n: inEnergy.length }) : this.t("vnotEnergy"))}</div>
-        <div class="row wrap">${free.length ? `<button class="soft redbg" data-act="clearGroup" data-type="${g.type}">${esc(this.t("vclearAll", { n: free.length }))}</button>` : ""}
+        <div class="small muted">${esc(g.items[0].fix === "info" ? this.t("vinfo") : this.t(`vexplain.${g.type}`))}</div>
+        ${g.items[0].fix === "info" ? "" : `<div class="small ${inEnergy.length ? "amber" : "green"}">${esc(inEnergy.length ? this.t("vinEnergy", { n: inEnergy.length }) : this.t("vnotEnergy"))}</div>`}
+        <div class="row wrap">${free.length && g.items[0].fix !== "info" ? `<button class="soft redbg" data-act="clearGroup" data-type="${g.type}">${esc(this.t("vclearAll", { n: free.length }))}</button>` : ""}
           <button class="link" data-act="toggleGroup" data-key="v:${g.type}">${this.t("vshow")} <ha-icon icon="${open ? "mdi:chevron-up" : "mdi:chevron-down"}"></ha-icon></button></div>
         ${open ? `<div class="vlist">${g.items.map((v) => `<div class="mono small">${esc(v.statistic_id)}${energy.has(v.statistic_id) ? ` <span class="pill blue">${this.t("groups.energy")}</span>` : ""}</div>`).join("")}</div>` : ""}
       </div>`;
@@ -1334,7 +1339,7 @@ class EnergyDoctorPanel extends HTMLElement {
     else if (!this.data) body = `<div class="card"><p class="red">${esc(this.message)}</p><button class="primary" data-act="fresh">${this.t("fresh")}</button></div>`;
     else body = `${this.message ? `<div class="card"><p class="red">${esc(this.message)}</p></div>` : ""}${{ overview: () => this.overviewTab(), energy: () => this.energyTab(), data: () => this.dataTab(), settings: () => this.settingsTab() }[this.tab]()}`;
     // The badge counts things to look at: each wrong hour, and each group of statistics warnings.
-    const vtypes = new Set((this.extra?.validation || []).map((v) => (["no_state", "entity_no_longer_recorded", "entity_not_recorded", "state_class_removed"].includes(v.type) ? v.type : v.id)));
+    const vtypes = new Set((this.extra?.validation || []).filter((v) => v.fix !== "info").map((v) => (["no_state", "entity_no_longer_recorded", "entity_not_recorded", "state_class_removed"].includes(v.type) ? v.type : v.id)));
     const issues = this.data ? this.visibleIssues().length + vtypes.size : 0;
     const tabBar = tabs && this.data ? `<nav class="tabs" role="tablist">${["overview", "energy", "data", "settings"].map((t) => `<button role="tab" aria-selected="${this.tab === t}" class="${this.tab === t ? "on" : ""}" data-act="tab" data-tab="${t}">${this.t(`tabs.${t}`)}${t === "energy" && issues ? `<span class="badge">${issues}</span>` : ""}</button>`).join("")}</nav>` : "";
     const y = this.scrollTop;

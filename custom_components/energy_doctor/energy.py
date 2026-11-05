@@ -189,7 +189,9 @@ async def async_fix(hass: HomeAssistant, issue: dict[str, Any], back: bool = Fal
 # What the panel offers per warning: "clear" the old statistics, "convert" them to the new unit, or "open" HA's page.
 _FIX = {
     "entity_no_longer_recorded": "clear",
-    "entity_not_recorded": "clear",
+    # Excluded from the recorder on purpose: HA warns as long as the sensor has a state class. Deleting statistics
+    # doesn't change that, so it is only explained.
+    "entity_not_recorded": "info",
     "no_state": "clear",
     "state_class_removed": "clear",
     "units_changed": "convert",
