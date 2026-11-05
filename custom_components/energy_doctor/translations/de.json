@@ -1,0 +1,24 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energie-Doktor",
+        "description": "Findet falsche Werte im Energie-Dashboard und zeigt, was die Datenbank füllt. Alles passiert im Panel Energie-Doktor in der Seitenleiste."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Energie-Doktor ist bereits eingerichtet."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "AI",
+        "description": "Wähle eine KI-Aufgabe, damit das Panel die Datenbank in einfachen Worten erklärt. Optional.",
+        "data": {
+          "ai_entity": "KI-Aufgabe"
+        }
+      }
+    }
+  }
+}

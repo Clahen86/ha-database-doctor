@@ -88,6 +88,11 @@ def level_of(throttle: int) -> str:
     return "often" if throttle <= 0 else "normal" if throttle <= 60 else "rare"
 
 
+def _instant(entries: list[er.RegistryEntry]) -> list[str]:
+    """The domains that make a device react at once (so it is never slowed down)."""
+    return sorted({e.domain for e in entries if not e.disabled_by} - {"sensor"})
+
+
 def _group(entries: list[er.RegistryEntry], hass: HomeAssistant) -> str | None:
     """The group of a device that may be slowed down, or None when it must stay instant."""
     domains = {e.domain for e in entries if not e.disabled_by}
@@ -106,17 +111,28 @@ def _group(entries: list[er.RegistryEntry], hass: HomeAssistant) -> str | None:
     return "sensors"
 
 
-async def async_plan(hass: HomeAssistant, entities: dict[str, dict[str, Any]], per_row: float) -> dict[str, Any]:
-    """The groups with their devices, the level each has now and what each level would save a month."""
+async def async_plan(
+    hass: HomeAssistant, entities: dict[str, dict[str, Any]], per_row: float, overrides: dict[str, str] | None = None
+) -> dict[str, Any]:
+    """The groups with their devices, the level each has now and what each level would save a month.
+
+    overrides: device id -> a level of its own, or "never" (leave it alone)."""
+    overrides = overrides or {}
     devices, registry = dr.async_get(hass), er.async_get(hass)
+    skipped: list[dict[str, Any]] = []
     bases: dict[str, dict[str, int]] = {}
     groups: dict[str, dict[str, Any]] = {k: {"key": k, "devices": []} for k in ("climate", "meters", "sensors")}
     signals: list[dict[str, Any]] = []
     for device in list(devices.devices.values()):
         address = ieee(device)
-        if address is None:
-            continue
         entries = er.async_entries_for_device(registry, device.id, include_disabled_entities=True)
+        busy = sum(entities.get(e.entity_id, {}).get("per_day", 0) for e in entries)
+        if address is None:
+            if busy >= 200:  # only devices that write a lot are worth explaining
+                entry = hass.config_entries.async_get_entry(device.config_entry_id) if device.config_entry_id else None
+                skipped.append({"name": device.name_by_user or device.name, "reason": "not_z2m",
+                                "detail": entry.title if entry else "", "per_day": busy})
+            continue
         for entry in entries:
             if SIGNAL.search(entry.entity_id):
                 info = entities.get(entry.entity_id, {})
@@ -127,6 +143,9 @@ async def async_plan(hass: HomeAssistant, entities: dict[str, dict[str, Any]], p
                 })
         group = _group(entries, hass)
         if group is None:
+            if busy >= 200:
+                skipped.append({"name": device.name_by_user or device.name, "reason": "instant",
+                                "detail": ", ".join(_instant(entries)), "per_day": busy})
             continue
         base = base_topic(hass, device)
         if base not in bases:
@@ -138,6 +157,7 @@ async def async_plan(hass: HomeAssistant, entities: dict[str, dict[str, Any]], p
             "id": device.id, "ieee": address, "base": base, "name": device.name_by_user or device.name,
             "throttle": throttle, "level": level_of(throttle), "per_day": per_day,
             "used": any(entities.get(e.entity_id, {}).get("used_in") for e in own),
+            "override": overrides.get(device.id),
             # Rows a day each level would leave: at most one per entity per throttle period.
             "rows": {lvl: sum(min(entities.get(e.entity_id, {}).get("per_day", 0), 86400 / t if t else 10**9)
                               for e in own) for lvl, t in THROTTLE.items()},
@@ -159,6 +179,7 @@ async def async_plan(hass: HomeAssistant, entities: dict[str, dict[str, Any]], p
             "level": "on" if any(s["on"] for s in signals) else "off",
         },
         "_signals": signals,
+        "skipped": sorted(skipped, key=lambda d: d["per_day"], reverse=True)[:30],
     }
 
 
@@ -175,9 +196,14 @@ async def async_apply(
 
     changes: list[dict[str, Any]] = []
     for group in plan["groups"]:
-        if (level := levels.get(group["key"])) not in THROTTLE:
-            continue
+        group_level = levels.get(group["key"])
         for device in group["devices"]:
+            own = device.get("override")
+            if own == "never":
+                continue  # the user said: leave this one alone
+            level = own if own in THROTTLE else group_level
+            if level not in THROTTLE:
+                continue
             throttle = THROTTLE[_safe(level, device)]
             if throttle == device["throttle"]:
                 continue

@@ -13,12 +13,20 @@ from homeassistant.components import persistent_notification
 from homeassistant.components.recorder import get_instance
 from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers.event import async_call_later, async_track_time_interval
+from homeassistant.helpers.event import async_call_later, async_track_time_change, async_track_time_interval
 from homeassistant.helpers.storage import Store
 
-from . import analysis, energy, rates, usage
+from . import analysis, energy, health, rates, usage
 from .const import CACHE_SECONDS, DOMAIN, KEEP_DAYS
 
+DEFAULT_SETTINGS: dict[str, Any] = {
+    "overrides": {},  # device id -> its own level, or "never"
+    "auto_new": True,  # new devices get the chosen levels
+    "retention": {},  # group -> days of detail to keep (graphs and hourly statistics stay)
+    "exclude": [],  # entities the user wants to stop saving: shown as the lines for configuration.yaml
+    "notify_energy": True,  # a notification when new wrong numbers turn up in Energy
+    "weekly_report": False,  # a short report on Mondays
+}
 # Unused entities that write at least this many rows a day are worth trimming.
 BUSY_PER_DAY = 500
 # How many days of history a trimmed entity keeps.
@@ -33,6 +41,7 @@ class Doctor:
         self.sizes: dict[str, int] = {}  # date -> database size, for the growth
         self.seen: list[str] = []  # energy issues the user has already been told about
         self.levels: dict[str, str] = {}  # the levels the user chose per group; new devices get them too
+        self.settings: dict[str, Any] = dict(DEFAULT_SETTINGS)
         self._all: dict[str, dict[str, Any]] = {}
         self._per_row = 300.0
         self._cache: tuple[float, dict[str, Any]] | None = None
@@ -46,7 +55,10 @@ class Doctor:
         self.sizes = data.get("sizes", {})
         self.seen = data.get("seen", [])
         self.levels = data.get("levels", {})
+        self.settings = DEFAULT_SETTINGS | data.get("settings", {})
         self._unsubs = [
+            async_track_time_change(self.hass, self._async_nightly, hour=3, minute=30, second=0),
+            async_track_time_change(self.hass, self._async_weekly, hour=9, minute=0, second=0),
             self.hass.bus.async_listen(dr.EVENT_DEVICE_REGISTRY_UPDATED, self._device_added),
             async_track_time_interval(self.hass, self._async_note_size, timedelta(hours=6)),
             async_track_time_interval(self.hass, self._async_watch, timedelta(hours=12)),
@@ -58,12 +70,12 @@ class Doctor:
             unsub()
 
     def _save(self) -> None:
-        self.store.async_delay_save(lambda: {"history": self.history, "sizes": self.sizes, "seen": self.seen[-500:], "levels": self.levels}, 1)
+        self.store.async_delay_save(lambda: {"history": self.history, "sizes": self.sizes, "seen": self.seen[-500:], "levels": self.levels, "settings": self.settings}, 1)
 
     @callback
     def _device_added(self, event: Event) -> None:
         """A new Zigbee2MQTT device gets the levels the user chose, once it has told what it is (after 5 minutes)."""
-        if event.data.get("action") != "create" or not self.levels:
+        if event.data.get("action") != "create" or not self.levels or not self.settings["auto_new"]:
             return
         device = dr.async_get(self.hass).async_get(event.data["device_id"])
         if device is None or rates.ieee(device) is None:
@@ -74,8 +86,56 @@ class Doctor:
 
         self._unsubs.append(async_call_later(self.hass, 300, _later))
 
+    def _da(self) -> bool:
+        return self.hass.config.language.startswith(("da", "nb", "nn", "no"))
+
+    async def _async_nightly(self, _now: Any = None) -> None:
+        """Keep only N days of detail for the groups the user chose. Graphs and hourly statistics stay."""
+        rules = {g: int(d) for g, d in self.settings["retention"].items() if d}
+        if not rules:
+            return
+        overview = await self.async_overview(fresh=True)
+        for group, days in rules.items():
+            ids = [
+                e["entity_id"] for e in self._all.values()
+                if e["group"] == group and not e["deleted"] and not any(u.get("history") for u in e["used_in"])
+            ]
+            if ids:
+                await self.hass.services.async_call(
+                    "recorder", "purge_entities", {"entity_id": ids, "keep_days": days}, blocking=True
+                )
+        self._cache = None
+        del overview
+
+    async def _async_weekly(self, now: Any) -> None:
+        """Mondays at 9: a short report of the week."""
+        if not self.settings["weekly_report"] or now.weekday() != 0:
+            return
+        overview = await self.async_overview(fresh=True)
+        days = sorted(self.sizes.items())
+        week = days[-1][1] - days[-8][1] if len(days) >= 8 else None
+        mb = lambda n: f"{round(n / 1e6)} MB"  # noqa: E731
+        issues = len(overview["energy_issues"])
+        if self._da():
+            text = (f"Databasen fylder {mb(overview['size'] or 0)}"
+                    + (f" og voksede {mb(week)} denne uge" if week is not None else "") + ". "
+                    + (f"{issues} forkerte tal i Energi. " if issues else "Ingen fejl i Energi. ")
+                    + (f"Du kan spare {mb(overview['suggestion']['bytes'])}. " if overview["suggestion"]["bytes"] else "")
+                    + "[Åbn Energi-doktor](/energy-doctor)")
+        else:
+            text = (f"The database is {mb(overview['size'] or 0)}"
+                    + (f" and grew {mb(week)} this week" if week is not None else "") + ". "
+                    + (f"{issues} wrong numbers in Energy. " if issues else "No wrong numbers in Energy. ")
+                    + (f"You can save {mb(overview['suggestion']['bytes'])}. " if overview["suggestion"]["bytes"] else "")
+                    + "[Open Energy Doctor](/energy-doctor)")
+        persistent_notification.async_create(
+            self.hass, text, title="Energi-doktor" if self._da() else "Energy Doctor", notification_id=f"{DOMAIN}_weekly"
+        )
+
     async def _async_watch(self, _now: Any = None) -> None:
         """Twice a day: tell the user about new wrong numbers in Energy (once per issue)."""
+        if not self.settings["notify_energy"]:
+            return
         overview = await self.async_overview(fresh=True)
         new = [i for i in overview["energy_issues"] if i["id"] not in self.seen]
         if not new:
@@ -134,6 +194,8 @@ class Doctor:
             await energy.async_add_causes(self.hass, issues)
             result["energy_issues"] = issues
             result["growth"] = self.growth()
+            result["sizes"] = sorted(self.sizes.items())
+            result["health"] = await health.async_health(self.hass, result["size"])
             result["suggestion"] = self._suggestion(result)
             result["entities"] = result["entities"][:200]
             result["at"] = time.time()
@@ -154,6 +216,41 @@ class Doctor:
                     trim.append(e["entity_id"])
                     saved += round(e["bytes"] - keep)
         return {"deleted": deleted, "trim": trim, "keep_days": TRIM_KEEP_DAYS, "bytes": saved}
+
+    # ---------- settings ----------
+
+    def get_settings(self) -> dict[str, Any]:
+        return dict(self.settings)
+
+    def set_settings(self, changes: dict[str, Any]) -> dict[str, Any]:
+        for key, value in changes.items():
+            if key in DEFAULT_SETTINGS:
+                self.settings[key] = value
+        self._save()
+        self._cache = None
+        return dict(self.settings)
+
+    # ---------- statistics warnings and use that Energy doesn't account for ----------
+
+    async def async_energy_extra(self) -> dict[str, Any]:
+        return {
+            "validation": await energy.async_validation(self.hass),
+            "unaccounted": await energy.async_unaccounted(self.hass),
+        }
+
+    async def async_fix_validation(self, issue_ids: list[str]) -> dict[str, Any]:
+        issues = [i for i in await energy.async_validation(self.hass) if i["id"] in set(issue_ids)]
+        done = [i["id"] for i in issues if await energy.async_fix_validation(self.hass, i)]
+        self._cache = None
+        return {"fixed": len(done)}
+
+    async def async_add_to_energy(self, statistic_ids: list[str]) -> dict[str, Any]:
+        added = await energy.async_add_to_energy(self.hass, statistic_ids)
+        record = {"id": uuid4().hex, "at": time.time(), "kind": "energy_devices", "added": added, "undone": False}
+        if added:
+            self.history.append(record)
+            self._save()
+        return {"id": record["id"], "added": len(added)}
 
     # ---------- AI ----------
 
@@ -191,7 +288,7 @@ class Doctor:
 
     async def async_rates(self) -> dict[str, Any]:
         await self.async_overview()
-        plan = await rates.async_plan(self.hass, self._all, self._per_row)
+        plan = await rates.async_plan(self.hass, self._all, self._per_row, self.settings["overrides"])
         plan.pop("_signals", None)
         plan["profiles"] = rates.PROFILES
         plan["chosen"] = self.levels
@@ -202,7 +299,7 @@ class Doctor:
     ) -> dict[str, Any]:
         """Set groups to levels (or a profile's levels). only: one device (a new one)."""
         await self.async_overview()
-        plan = await rates.async_plan(self.hass, self._all, self._per_row)
+        plan = await rates.async_plan(self.hass, self._all, self._per_row, self.settings["overrides"])
         if only:
             for group in plan["groups"]:
                 group["devices"] = [d for d in group["devices"] if d["id"] == only]
@@ -262,6 +359,7 @@ class Doctor:
             )
         record = {
             "id": uuid4().hex, "at": time.time(), "kind": "cleanup",
+            "size_before": (self._cache[1]["size"] if self._cache else None),
             "deleted": deleted, "trim": trim, "keep_days": keep_days, "undone": False,
         }
         self.history.append(record)
@@ -271,12 +369,25 @@ class Doctor:
 
     # ---------- history ----------
 
+    def history_view(self) -> list[dict[str, Any]]:
+        """The undo history, newest first; a clean-up shows how much smaller the database got since."""
+        now = self._cache[1]["size"] if self._cache else (sorted(self.sizes.items())[-1][1] if self.sizes else None)
+        result = []
+        for record in reversed(self.history):
+            item = dict(record)
+            if record["kind"] == "cleanup" and record.get("size_before") and now:
+                item["saved"] = max(0, record["size_before"] - now)
+            result.append(item)
+        return result
+
     async def async_undo(self, record_id: str) -> bool:
         record = next((r for r in self.history if r["id"] == record_id and not r["undone"]), None)
         if record is None or record["kind"] == "cleanup":
             return False  # a clean-up removed data; only a backup brings it back
         if record["kind"] == "rates":
             await rates.async_undo(self.hass, record["done"])
+        elif record["kind"] == "energy_devices":
+            await energy.async_add_to_energy(self.hass, record["added"], back=True)
         else:
             for issue in sorted(record["issues"], key=lambda i: i["start"]):
                 await energy.async_fix(self.hass, issue, back=True)

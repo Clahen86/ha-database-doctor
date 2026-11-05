@@ -10,13 +10,17 @@ Energy Doctor adds a panel to the sidebar:
 - **What takes up the most:** how big the database is, how fast it grows, when the disk is full, and which entities take up the space – with how often they save and where they are used (automations, scripts, scenes, graphs, dashboards, the energy dashboard, helpers, YAML).
 - **Save less often:** three levels per group (temperature and climate, energy meters, other sensors) and profiles for the whole house (Sparse, Balanced, Detailed). It uses Zigbee2MQTT's own *throttle* option, only on devices that have nothing but sensors – lights, plugs, buttons, motion and door sensors are never slowed down, and anything that is used never goes below Normal. New devices get the same. Unused signal-strength entities can be switched off. Everything can be undone.
 - **Gaps:** when a meter was offline and everything came at once, the use is spread over the missing hours. The price of the same hour is fixed together with the energy, and the panel says why a meter jumped (it was unavailable or went to 0).
-- **A watch:** twice a day it checks for new wrong numbers and tells you.
+- **Overview:** size over time with a forecast (doing nothing vs. after Optimise), a health check (SD card, size, the recorder's settings, the last backup) and how much smaller the database got after a clean-up.
+- **Statistics warnings:** Home Assistant's own warnings (unit changed, entity gone …) in one place, fixed with its own functions.
+- **Use nothing explains:** how much of your grid use the devices in Energy explain, with energy meters you can add in one tap.
+- **How long details are kept:** per group, for example 3 days of second-by-second detail – graphs and hourly statistics always stay.
+- **A watch:** twice a day it checks for new wrong numbers and tells you, and a weekly report if you want one.
 - **Explain with AI (optional):** pick an AI task entity under *Configure*, and the panel explains your database in plain words.
 - **Clean up:** removes the history of devices that are gone, and old history of busy entities that nothing uses, with the recorder's own purge – after a Home Assistant backup if you want. Anything something uses is never suggested.
 
 Energy Doctor only changes data through Home Assistant's own recorder functions. It never writes your YAML files: to stop saving an entity it shows the lines to add yourself.
 
-> Early version (0.2).
+> Early version (0.3). Tabs: Overview · Energy · Data · Settings. Languages: English, Danish, German, Swedish, Dutch.
 
 ## Installation
 

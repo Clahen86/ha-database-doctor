@@ -192,3 +192,36 @@ async def test_rates_only_slow_sensor_devices_and_undo(recorder_mock, hass: Home
     sent = {c.args[1] for c in mqtt_mock.async_publish.call_args_list}
     assert '{"id": "0x00158d0001a2b3c4", "options": {"throttle": 0}}' in sent
     assert registry.async_get("sensor.gang_linkquality").disabled_by is None
+
+
+async def test_settings_retention_health_energy_devices_and_history(recorder_mock, hass: HomeAssistant, doctor) -> None:
+    """Retention purges only what no graph needs; meters are added to Energy and taken out on undo."""
+    from homeassistant.components.energy.data import async_get_manager
+
+    assert await async_setup_component(hass, "energy", {})
+    hass.states.async_set("sensor.signal_linkquality", "100")
+    hass.states.async_set("sensor.oven_energy", "5", {"device_class": "energy", "state_class": "total_increasing", "unit_of_measurement": "kWh"})
+    await async_wait_recording_done(hass)
+
+    settings = doctor.set_settings({"retention": {"signals": 3}, "weekly_report": True, "nonsense": 1})
+    assert settings["retention"] == {"signals": 3} and settings["weekly_report"] and "nonsense" not in settings
+    calls = []
+
+    async def purge(call):
+        calls.append(dict(call.data))
+
+    hass.services.async_register("recorder", "purge_entities", purge)
+    await doctor._async_nightly()
+    assert calls and calls[0]["keep_days"] == 3 and "sensor.signal_linkquality" in calls[0]["entity_id"]
+
+    overview = await doctor.async_overview(fresh=True)
+    assert any(h["key"] == "keep_days" for h in overview["health"])
+    extra = await doctor.async_energy_extra()
+    assert isinstance(extra["validation"], list)
+
+    result = await doctor.async_add_to_energy(["sensor.oven_energy"])
+    manager = await async_get_manager(hass)
+    assert {"stat_consumption": "sensor.oven_energy"} in manager.data["device_consumption"]
+    assert doctor.history_view()[0]["kind"] == "energy_devices"
+    assert await doctor.async_undo(result["id"])
+    assert not manager.data["device_consumption"]

@@ -17,7 +17,7 @@ from sqlalchemy import func, select
 from homeassistant.components.recorder import get_instance
 from homeassistant.components.recorder.db_schema import States, StatesMeta, Statistics, StatisticsMeta
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.recorder import session_scope
 
 SQLITE = "sqlite:///"
@@ -103,7 +103,7 @@ def kind(entity_id: str, state: Any, entry: er.RegistryEntry | None) -> str:
 async def async_analyse(hass: HomeAssistant) -> dict[str, Any]:
     """The whole picture for the panel's front page (without the uses; see usage.py)."""
     info = await get_instance(hass).async_add_executor_job(read_db, hass)
-    registry = er.async_get(hass)
+    registry, devices = er.async_get(hass), dr.async_get(hass)
     per_row = (info.size / info.rows) if info.size and info.rows else 300  # bytes; a rough average when unknown
     groups: dict[str, int] = {}
     entities = []
@@ -111,6 +111,7 @@ async def async_analyse(hass: HomeAssistant) -> dict[str, Any]:
         state = hass.states.get(entity_id)
         entry = registry.async_get(entity_id)
         group = kind(entity_id, state, entry)
+        device = devices.async_get(entry.device_id) if entry and entry.device_id else None
         size = round(data["rows"] * per_row)
         groups[group] = groups.get(group, 0) + size
         entities.append(
@@ -118,6 +119,8 @@ async def async_analyse(hass: HomeAssistant) -> dict[str, Any]:
                 "entity_id": entity_id,
                 "name": (state and state.name) or (entry and (entry.name or entry.original_name)) or entity_id,
                 "group": group,
+                "device": device.id if device else None,
+                "device_name": (device.name_by_user or device.name) if device else None,
                 "rows": data["rows"],
                 "per_day": data["per_day"],
                 "bytes": size,

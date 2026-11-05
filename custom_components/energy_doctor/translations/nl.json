@@ -1,0 +1,24 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energiedokter",
+        "description": "Vindt foute waarden in het energiedashboard en laat zien wat de database vult. Alles gebeurt in het paneel Energiedokter in de zijbalk."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Energiedokter is al ingesteld."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "AI",
+        "description": "Kies een AI-taak zodat het paneel de database in gewone woorden uitlegt. Optioneel.",
+        "data": {
+          "ai_entity": "AI-taak"
+        }
+      }
+    }
+  }
+}

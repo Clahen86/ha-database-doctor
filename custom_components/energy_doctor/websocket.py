@@ -15,7 +15,7 @@ from .doctor import Doctor
 
 @callback
 def async_setup(hass: HomeAssistant) -> None:
-    for command in (ws_overview, ws_fix_energy, ws_cleanup, ws_history, ws_undo, ws_rates, ws_set_rates, ws_explain, ws_settings):
+    for command in (ws_overview, ws_fix_energy, ws_cleanup, ws_history, ws_undo, ws_rates, ws_set_rates, ws_explain, ws_settings, ws_energy_extra, ws_fix_validation, ws_add_to_energy, ws_set_settings):
         websocket_api.async_register_command(hass, command)
 
 
@@ -69,7 +69,7 @@ async def ws_cleanup(hass: HomeAssistant, connection: websocket_api.ActiveConnec
 def ws_history(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
     if (doctor := _doctor(hass)) is None:
         return _not_loaded(connection, msg)
-    connection.send_result(msg["id"], list(reversed(doctor.history)))
+    connection.send_result(msg["id"], doctor.history_view())
 
 
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/undo", vol.Required("record"): str})
@@ -129,4 +129,52 @@ def ws_settings(hass: HomeAssistant, connection: websocket_api.ActiveConnection,
         "ai": bool(entry and entry.options.get(CONF_AI)),
         "backup": hass.services.has_service("backup", "create_automatic"),
         "mqtt": "mqtt" in hass.config.components,
+        **(entry.runtime_data.get_settings() if entry else {}),
     })
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/set_settings",
+        vol.Optional("overrides"): {str: vol.In(["often", "normal", "rare", "never"])},
+        vol.Optional("auto_new"): bool,
+        vol.Optional("retention"): {str: vol.Any(None, vol.All(int, vol.Range(min=1, max=365)))},
+        vol.Optional("exclude"): [str],
+        vol.Optional("notify_energy"): bool,
+        vol.Optional("weekly_report"): bool,
+    }
+)
+@websocket_api.require_admin
+@callback
+def ws_set_settings(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    if (doctor := _doctor(hass)) is None:
+        return _not_loaded(connection, msg)
+    changes = {k: v for k, v in msg.items() if k not in ("id", "type")}
+    connection.send_result(msg["id"], doctor.set_settings(changes))
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/energy_extra"})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_energy_extra(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    if (doctor := _doctor(hass)) is None:
+        return _not_loaded(connection, msg)
+    connection.send_result(msg["id"], await doctor.async_energy_extra())
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/fix_validation", vol.Required("issues"): [str]})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_fix_validation(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    if (doctor := _doctor(hass)) is None:
+        return _not_loaded(connection, msg)
+    connection.send_result(msg["id"], await doctor.async_fix_validation(msg["issues"]))
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/add_to_energy", vol.Required("statistics"): [str]})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_add_to_energy(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    if (doctor := _doctor(hass)) is None:
+        return _not_loaded(connection, msg)
+    connection.send_result(msg["id"], await doctor.async_add_to_energy(msg["statistics"]))

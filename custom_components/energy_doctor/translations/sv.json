@@ -1,0 +1,24 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Energidoktorn",
+        "description": "Hittar felaktiga värden i energipanelen och visar vad som fyller databasen. Allt sker i panelen Energidoktorn i sidomenyn."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Energidoktorn är redan inställd."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "AI",
+        "description": "Välj en AI-uppgift så att panelen kan förklara databasen med enkla ord. Valfritt.",
+        "data": {
+          "ai_entity": "AI-uppgift"
+        }
+      }
+    }
+  }
+}
