@@ -2,32 +2,55 @@
 
 [![Validate](https://github.com/Clahen86/ha-energy-doctor/actions/workflows/validate.yml/badge.svg)](https://github.com/Clahen86/ha-energy-doctor/actions/workflows/validate.yml)
 
-**Wrong numbers in the energy dashboard fixed with one tap – and a clear view of what fills your database.**
+**Your fridge used 50,000 kWh in one hour? Energy Doctor finds the wrong numbers in your energy dashboard, fixes them with one tap – and shows what fills your database and how to keep it small.**
 
-<p>
-<img src="docs/panel-overview.png" alt="Overview: what fills the database, a suggestion and the forecast" width="200">
-<img src="docs/panel-energy.png" alt="Energy: spikes, gaps, statistics warnings and use no device explains" width="200">
-<img src="docs/panel-data.png" alt="Data: what takes up the most, per device, with where it is used" width="200">
-<img src="docs/panel-settings.png" alt="Settings: save less often, profiles, how long details are kept" width="200">
-</p>
+[English](#english) · [Dansk](#dansk)
 
-Energy Doctor adds a panel to the sidebar:
+## English
 
-- **Wrong numbers in Energy:** finds hours with spikes (a fridge using 50,000 kWh in one hour) and negative hours, and sets them to what is normal for that meter – with Home Assistant's own *Adjust sum*. Every fix can be undone.
-- **What takes up the most:** how big the database is, how fast it grows, when the disk is full, and which entities take up the space – with how often they save and where they are used (automations, scripts, scenes, graphs, dashboards, the energy dashboard, helpers, YAML).
-- **Save less often:** three levels per group (temperature and climate, energy meters, other sensors) and profiles for the whole house (Sparse, Balanced, Detailed). It uses Zigbee2MQTT's own *throttle* option, only on devices that have nothing but sensors – lights, plugs, buttons, motion and door sensors are never slowed down, and anything that is used never goes below Normal. New devices get the same. Unused signal-strength entities can be switched off. Everything can be undone.
-- **Gaps:** when a meter was offline and everything came at once, the use is spread over the missing hours. The price of the same hour is fixed together with the energy, and the panel says why a meter jumped (it was unavailable or went to 0).
-- **Overview:** size over time with a forecast (doing nothing vs. after Optimise), a health check (SD card, size, the recorder's settings, the last backup) and how much smaller the database got after a clean-up.
-- **Statistics warnings:** Home Assistant's own warnings (unit changed, entity gone …) in one place, fixed with its own functions.
-- **Use nothing explains:** how much of your grid use the devices in Energy explain, with energy meters you can add in one tap.
-- **How long details are kept:** per group, for example 3 days of second-by-second detail – graphs and hourly statistics always stay.
-- **A watch:** twice a day it checks for new wrong numbers and tells you, and a weekly report if you want one.
+Home Assistant records everything, and two things go wrong over time: a meter that resets or drops out puts absurd numbers in the energy dashboard, and the database keeps growing until Home Assistant starts and backs up slowly. Energy Doctor adds a panel to the sidebar that finds both, explains them in plain words and fixes them – only with Home Assistant's own functions, and nothing that something uses is ever touched.
+
+### Overview
+
+<p><img src="docs/panel-overview.png" alt="Overview: what fills the database, a suggestion, save less often, size over time and a health check" width="300"></p>
+
+- **What fills the database** by group, how fast it grows and when the disk is full.
+- **One suggestion** with how much it saves, e.g. history of devices that are gone and old history that nothing uses.
+- **Size over time** with a forecast: doing nothing vs. after *Optimise*.
+- **Health check:** the database on an SD card, a database so big that starting is slow, the recorder's settings and the last backup.
 - **Explain with AI (optional):** pick an AI task entity under *Configure*, and the panel explains your database in plain words.
-- **Clean up:** removes the history of devices that are gone, and old history of busy entities that nothing uses, with the recorder's own purge – after a Home Assistant backup if you want. Anything something uses is never suggested.
 
-Energy Doctor only changes data through Home Assistant's own recorder functions. It never writes your YAML files: to stop saving an entity it shows the lines to add yourself.
+### Wrong numbers in Energy
 
-> Early version (0.3). Tabs: Overview · Energy · Data · Settings. Languages: English, Danish, German, Swedish, Dutch.
+<p><img src="docs/panel-energy.png" alt="Energy: spikes, gaps, statistics warnings and use no device explains" width="300"></p>
+
+- **Spikes and negative hours** are set to what is normal for that meter, with Home Assistant's own *Adjust sum*. The price of the same hour is fixed with it, and the panel says why the meter jumped (it was unavailable or went to 0).
+- **Gaps:** when a meter was offline and everything came at once, the use is spread over the missing hours.
+- **Statistics warnings** that Home Assistant shows under *Statistics* (unit changed, entity gone …) in one place, fixed with its own functions.
+- **Use no device explains:** how much of your grid use the devices in Energy explain, with energy meters you can add in one tap.
+- **A watch** checks twice a day and tells you about new wrong numbers. Every fix can be undone.
+
+### What takes up the most
+
+<p><img src="docs/panel-data.png" alt="Data: what takes up the most, per device, with where it is used" width="300"></p>
+
+One row per device, with a clear status – *Can be cleaned*, *Saves a lot*, *Used – keep* or *Deleted* – and one button that does the right thing. Tap a row to see each entity, how often it saves and where it is used: automations, scripts, scenes, graphs, dashboards, the energy dashboard, helpers and your YAML files. Filter and search when the list is long.
+
+### Save less often
+
+<p><img src="docs/panel-settings.png" alt="Settings: save less often, profiles, how long details are kept" width="300"></p>
+
+- **Profiles for the whole house** – Sparse, Balanced, Detailed – or three levels per group: temperature and climate, energy meters, other sensors. Or a level per device, or *Never touch*.
+- It uses Zigbee2MQTT's own *throttle* option, **only on devices with nothing but sensors**. Lights, plugs, buttons, motion and door sensors are never slowed down, and anything an automation or graph uses never goes below Normal. *Why not these?* lists the devices it leaves alone and why.
+- **New devices** get the same automatically, and unused signal-strength (linkquality) entities can be switched off.
+- **How long details are kept**, per group: e.g. 3 days of second-by-second detail – graphs and hourly statistics always stay.
+- **Stop saving** an entity: Energy Doctor never changes your YAML, so it collects the lines for `configuration.yaml` for you to copy.
+
+### Safe by design
+
+- Data is only changed with the recorder's own functions (*Adjust sum*, import of statistics, purge) – never raw SQL.
+- Fixes and changes of how often devices save can be undone. A clean-up can't, so it offers Home Assistant's own backup first.
+- Your YAML files are never written.
 
 ## Installation
 
@@ -36,14 +59,43 @@ Energy Doctor only changes data through Home Assistant's own recorder functions.
 3. Settings → Devices & services → Add integration → **Energy Doctor**.
 4. Open **Energy Doctor** in the sidebar.
 
+Languages: English, Danish, German, Swedish and Dutch. Early version – feedback is welcome in [issues](https://github.com/Clahen86/ha-energy-doctor/issues).
+
 ---
 
 ## Dansk
 
-**Forkerte tal i Energi-dashboardet rettet med ét tryk – og et klart overblik over, hvad der fylder i databasen.**
+**Brugte dit køleskab 50.000 kWh på én time? Energi-doktor finder de forkerte tal i Energi-dashboardet, retter dem med ét tryk – og viser, hvad der fylder i databasen, og hvordan den holdes lille.**
 
-- **Fejl i Energi:** finder timer med spring og negative timer og sætter dem til det normale for måleren med Home Assistants egen *Juster sum*. Alt kan fortrydes.
-- **Fylder mest:** databasens størrelse, vækst, hvornår disken er fuld, og hvad der fylder – med hvor tit det gemmes, og hvor det bruges.
-- **Ryd op:** fjerner historik fra enheder, der ikke findes længere, og gammel historik fra travle entiteter, som intet bruger. Det, der bruges, bliver aldrig foreslået.
+Home Assistant gemmer alt, og med tiden går to ting galt: en måler, der nulstilles eller falder ud, giver skøre tal i Energi, og databasen vokser, til opstart og backup bliver langsomme. Energi-doktor er et panel i sidemenuen, der finder begge dele, forklarer dem med almindelige ord og retter dem – kun med Home Assistants egne funktioner, og det, der bruges, røres aldrig.
 
-Energi-doktor ændrer kun data via Home Assistants egne recorder-funktioner og skriver aldrig i dine YAML-filer.
+### Overblik
+
+<p><img src="docs/panel-overview.png" alt="Overblik" width="300"></p>
+
+Hvad der fylder, hvor hurtigt det vokser, og hvornår disken er fuld. Ét forslag med, hvor meget det sparer, en graf med prognose (uden at gøre noget og efter *Optimer*) og et sundhedstjek. Vælger du en AI under *Konfigurer*, kan panelet forklare din database.
+
+### Fejl i Energi
+
+<p><img src="docs/panel-energy.png" alt="Energi" width="300"></p>
+
+Spring og negative timer sættes til det normale for måleren med Home Assistants egen *Juster sum*, og prisen for samme time rettes med. Huller, hvor en måler var væk, fordeles over de manglende timer. Home Assistants statistik-advarsler samles ét sted, og du ser, hvor meget af forbruget enhederne i Energi forklarer. En vagt giver besked om nye fejl. Alt kan fortrydes.
+
+### Fylder mest
+
+<p><img src="docs/panel-data.png" alt="Data" width="300"></p>
+
+Én linje pr. enhed med en klar status og én knap, der gør det rigtige. Tryk på en linje for at se hver entitet, hvor tit den gemmer, og hvor den bruges.
+
+### Gem sjældnere
+
+<p><img src="docs/panel-settings.png" alt="Indstillinger" width="300"></p>
+
+Profiler for hele huset eller niveau pr. gruppe og pr. enhed via Zigbee2MQTTs egen *throttle* – kun på enheder med rene sensorer. Lys, stik, knapper, bevægelses- og dørsensorer sættes aldrig ned, og det, der bruges, kommer aldrig under Normal. Nye enheder får det samme. Du vælger også, hvor længe detaljerne gemmes, mens grafer og timeværdier altid bliver.
+
+### Installation
+
+1. HACS → søg efter **Energy Doctor** → Download. (Ikke i HACS endnu? Tilføj `https://github.com/Clahen86/ha-energy-doctor` som brugerdefineret repository af typen *Integration*.)
+2. Genstart Home Assistant.
+3. Indstillinger → Enheder og tjenester → Tilføj integration → **Energy Doctor**.
+4. Åbn **Energi-doktor** i sidemenuen.
