@@ -1,6 +1,9 @@
 // Energy Doctor panel: tabs Overview · Energy · Data · Settings.
 
 const EN = {
+  keepRule: "Keep it like this – they keep only {k} days from now on (checked every night)",
+  keptPill: "Keeps {k} days",
+  unkeep: "Keep everything again",
   repackAfter: "Make the file smaller when it is done (repack)",
   recFreed: "≈ {n} freed in the database",
   recRepacking: "the file is being made smaller …",
@@ -185,6 +188,9 @@ const EN = {
 };
 
 const DA = {
+  keepRule: "Hold det sådan – de beholder kun {k} dage fremover (tjekkes hver nat)",
+  keptPill: "Beholder {k} dage",
+  unkeep: "Behold alt igen",
   repackAfter: "Gør filen mindre, når den er færdig (komprimering)",
   recFreed: "≈ {n} frigivet i databasen",
   recRepacking: "filen gøres mindre …",
@@ -369,6 +375,9 @@ const DA = {
 };
 
 const DE = {
+  keepRule: "So beibehalten – künftig nur {k} Tage behalten (jede Nacht geprüft)",
+  keptPill: "Behält {k} Tage",
+  unkeep: "Wieder alles behalten",
   repackAfter: "Datei danach verkleinern (komprimieren)",
   recFreed: "≈ {n} in der Datenbank freigegeben",
   recRepacking: "die Datei wird verkleinert …",
@@ -500,6 +509,9 @@ const DE = {
 };
 
 const SV = {
+  keepRule: "Behåll så här – de behåller bara {k} dagar framöver (kontrolleras varje natt)",
+  keptPill: "Behåller {k} dagar",
+  unkeep: "Behåll allt igen",
   repackAfter: "Gör filen mindre när det är klart (komprimering)",
   recFreed: "≈ {n} frigjort i databasen",
   recRepacking: "filen görs mindre …",
@@ -631,6 +643,9 @@ const SV = {
 };
 
 const NL = {
+  keepRule: "Zo houden – ze bewaren voortaan alleen {k} dagen (elke nacht gecontroleerd)",
+  keptPill: "Bewaart {k} dagen",
+  unkeep: "Weer alles bewaren",
   repackAfter: "Bestand daarna kleiner maken (comprimeren)",
   recFreed: "≈ {n} vrijgemaakt in de database",
   recRepacking: "het bestand wordt kleiner gemaakt …",
@@ -791,6 +806,7 @@ class EnergyDoctorPanel extends HTMLElement {
     this.limit = 10;
     this.backup = true;
     this.repack = true;
+    this.keepRule = true;
     this.message = "";
     this.aiText = "";
   }
@@ -1141,6 +1157,7 @@ class EnergyDoctorPanel extends HTMLElement {
       r.used = r.entities.some((e) => e.used_in.length);
       r.history = r.entities.some((e) => e.history_used);
       r.protected = r.entities.some((e) => e.protected);
+      r.kept = Math.max(0, ...r.entities.map((e) => e.keep_days || 0)) || null;
       const busy = r.per_day >= 500;
       r.status = r.deleted ? "deleted" : r.protected ? "protected" : r.history ? "history" : r.used ? (busy ? "value_busy" : "value") : busy ? "busy" : "clean";
       return r;
@@ -1175,13 +1192,14 @@ class EnergyDoctorPanel extends HTMLElement {
         <div class="line"><span>${esc(e.name)}</span><span class="nowrap muted">${this.bytes(e.bytes)}</span></div>
         <div class="mono small muted">${esc(e.entity_id)} · ${esc(this.t("rows", { n: this.num(e.rows, 0), d: this.num(e.per_day, 0) }))}</div>
         ${e.used_in.length ? `<div class="chips">${e.used_in.slice(0, 8).map((u) => `<span class="chip ${u.history ? "hist" : ""}"><ha-icon icon="${USE_ICON[u.kind] || "mdi:link"}"></ha-icon>${esc(u.kind === "energy" ? this.t("groups.energy") : u.name)}${u.history ? ` · ${this.t("historyTag")}` : ""}</span>`).join("")}</div>` : `<div class="small muted">${this.t("unused")}</div>`}
-        ${!e.deleted ? `<button class="link small" data-act="protect" data-id="${esc(e.entity_id)}">${e.protected ? this.t("protectOff") : this.t("protectOn")}</button>` : ""}
+        <div class="row wrap">${!e.deleted ? `<button class="link small" data-act="protect" data-id="${esc(e.entity_id)}">${e.protected ? this.t("protectOff") : this.t("protectOn")}</button>` : ""}
+        ${e.keep_days ? `<button class="link small" data-act="unkeep" data-id="${esc(e.entity_id)}">${this.t("unkeep")}</button>` : ""}</div>
       </div>`).join("") : "";
     return `<div class="erow">
       <button class="rowhead" data-act="toggleRow" data-key="${esc(r.key)}" aria-expanded="${open}">
         <span class="line"><span class="name">${esc(r.name)}</span><span class="nowrap">${this.bytes(r.bytes)}</span></span>
         <span class="bar"><span style="width:${pct}%;background:${COLORS[r.group] || COLORS.other}"></span></span>
-        <span class="meta"><span class="pill ${pill}">${esc(statusText)}</span>${r.entities.length > 1 ? `<span class="muted small">${this.t("nEntities", { n: r.entities.length })}</span>` : ""}<ha-icon class="chev" icon="${open ? "mdi:chevron-up" : "mdi:chevron-down"}"></ha-icon></span>
+        <span class="meta"><span class="pill ${pill}">${esc(statusText)}</span>${r.kept ? `<span class="pill grey">${esc(this.t("keptPill", { k: r.kept }))}</span>` : ""}${r.entities.length > 1 ? `<span class="muted small">${this.t("nEntities", { n: r.entities.length })}</span>` : ""}<ha-icon class="chev" icon="${open ? "mdi:chevron-up" : "mdi:chevron-down"}"></ha-icon></span>
       </button>
       ${action ? `<div class="rowact">${action}</div>` : ""}
       ${details}
@@ -1292,6 +1310,7 @@ class EnergyDoctorPanel extends HTMLElement {
       <div class="card warncard"><ha-icon icon="mdi:shield-alert-outline"></ha-icon><div class="grow"><span>${this.t("cleanWarn")}</span>
         ${this.settings.backup ? `<label class="irow pick nob"><input type="checkbox" id="backup" ${this.backup ? "checked" : ""}><span class="box"></span><span class="grow">${this.t("backupFirst")}</span></label>` : `<br><a href="/config/backup" target="_top">${this.t("makeBackup")}</a>`}
         <label class="irow pick nob"><input type="checkbox" id="repack" ${this.repack ? "checked" : ""}><span class="box"></span><span class="grow">${this.t("repackAfter")}</span></label></div></div>
+      ${s.trim.length ? `<div class="card"><label class="irow pick nob"><input type="checkbox" id="keepRule" ${this.keepRule ? "checked" : ""}><span class="box"></span><span class="grow">${esc(this.t("keepRule", { k: s.keep_days }))}</span></label></div>` : ""}
       <div class="actions"><button class="ghost" data-act="tabs">${this.t("back")}</button>
         <button class="primary" data-act="cleanDo">${s.bytes ? this.t("cleanDo", { n: this.bytes(s.bytes) }) : this.t("cleanup")}</button></div>`;
   }
@@ -1345,6 +1364,8 @@ class EnergyDoctorPanel extends HTMLElement {
     check("input[data-meter]", this.mpicked, "meter");
     const backup = root.getElementById("backup");
     if (backup) backup.addEventListener("change", () => (this.backup = backup.checked));
+    const keepRule = root.getElementById("keepRule");
+    if (keepRule) keepRule.addEventListener("change", () => (this.keepRule = keepRule.checked));
     const repack = root.getElementById("repack");
     if (repack) repack.addEventListener("change", () => (this.repack = repack.checked));
     const q = root.getElementById("q");
@@ -1437,7 +1458,7 @@ class EnergyDoctorPanel extends HTMLElement {
         }
         this.workingText = [this.t("cleaning"), ""];
         this.render();
-        return this.ws("cleanup", { deleted: s.deleted, trim: s.trim, keep_days: s.keep_days, backup: false, repack: this.repack });
+        return this.ws("cleanup", { deleted: s.deleted, trim: s.trim, keep_days: s.keep_days, backup: false, repack: this.repack, keep_rule: this.keepRule });
       }, this.t("cleanDone"), this.t("cleanDoneText"));
     } else if (a === "fixPicked") {
       const ids = [...this.picked];
@@ -1481,6 +1502,11 @@ class EnergyDoctorPanel extends HTMLElement {
         items: keep.map((e) => ({ entity_id: e.entity_id, name: e.name, bytes: e.bytes, kind: "trim", uses: e.used_in })) };
       this.view = "clean";
       this.render();
+    } else if (a === "unkeep") {
+      const keep = { ...(this.settings.keep || {}) };
+      delete keep[d.id];
+      for (const e of this.data.entities) if (e.entity_id === d.id) e.keep_days = null;
+      this.saveSettings({ keep });
     } else if (a === "protect") {
       const set = new Set(this.settings.protect || []);
       if (set.has(d.id)) set.delete(d.id);

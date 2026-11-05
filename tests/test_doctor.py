@@ -290,3 +290,29 @@ async def test_reads_yaml_and_outside_code_for_history(recorder_mock, hass: Home
     assert by_id["sensor.kun_vaerdi"]["used_in"][0]["kind"] == "outside" and not by_id["sensor.kun_vaerdi"]["history_used"]
     assert not by_id["sensor.kun_kommentar"]["used_in"] and by_id["sensor.kun_kommentar"]["protected"]
     assert "appdaemon" in overview["usage"]["outside_read"]
+
+
+async def test_keep_it_like_this_rule_skips_what_comes_into_use(recorder_mock, hass: HomeAssistant, doctor) -> None:
+    """A clean-up can become a rule: every night the same entities keep the same days - unless they come into use."""
+    for e in ("sensor.keba_current", "sensor.other_busy"):
+        hass.states.async_set(e, "1")
+    await async_wait_recording_done(hass)
+    await doctor.async_overview(fresh=True)
+    await doctor.async_cleanup([], ["sensor.keba_current", "sensor.other_busy"], 3, repack=False)
+    assert doctor.settings["keep"] == {"sensor.keba_current": 3, "sensor.other_busy": 3}
+
+    calls = []
+
+    async def purge(call):
+        calls.append(dict(call.data))
+
+    hass.services.async_register("recorder", "purge_entities", purge)
+    doctor.set_settings({"protect": ["sensor.other_busy"]})  # the user starts to need its history
+    await doctor._async_nightly()
+    assert calls == [{"entity_id": ["sensor.keba_current"], "keep_days": 3}]
+
+    doctor.set_settings({"keep": {"sensor.keba_current": None, "sensor.other_busy": 3}})  # "Keep everything again"
+    assert doctor.settings["keep"] == {"sensor.other_busy": 3}
+    overview = await doctor.async_overview(fresh=True)
+    by_id = {e["entity_id"]: e for e in overview["entities"]}
+    assert by_id["sensor.other_busy"]["keep_days"] == 3 and not by_id["sensor.keba_current"]["keep_days"]

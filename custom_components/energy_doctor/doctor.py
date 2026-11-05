@@ -25,6 +25,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "retention": {},  # group -> days of detail to keep (graphs and hourly statistics stay)
     "exclude": [],  # entities the user wants to stop saving: shown as the lines for configuration.yaml
     "protect": [],  # entities never suggested for clean-up, trimming or saving less often ("Never touch")
+    "keep": {},  # entity -> days of history it keeps, every night (from "Keep it like this" after a clean-up)
     "notify_energy": True,  # a notification when new wrong numbers turn up in Energy
     "weekly_report": False,  # a short report on Mondays
 }
@@ -100,11 +101,22 @@ class Doctor:
         return self.hass.config.language.startswith(("da", "nb", "nn", "no"))
 
     async def _async_nightly(self, _now: Any = None) -> None:
-        """Keep only N days of detail for the groups the user chose. Graphs and hourly statistics stay."""
+        """Keep only N days of detail for the groups and entities the user chose. Graphs and hourly statistics stay,
+        and an entity whose history has come into use since (a graph, Energy, a helper, "Never touch") is skipped."""
         rules = {g: int(d) for g, d in self.settings["retention"].items() if d}
-        if not rules:
+        keep = {e: int(d) for e, d in (self.settings.get("keep") or {}).items() if d}
+        if not rules and not keep:
             return
         overview = await self.async_overview(fresh=True)
+        by_days: dict[int, list[str]] = {}
+        for entity_id, days in keep.items():
+            e = self._all.get(entity_id)
+            if e and not e.get("history_used") and not e.get("protected"):
+                by_days.setdefault(days, []).append(entity_id)
+        for days, ids in by_days.items():
+            await self.hass.services.async_call(
+                "recorder", "purge_entities", {"entity_id": ids, "keep_days": days}, blocking=True
+            )
         for group, days in rules.items():
             ids = [
                 e["entity_id"] for e in self._all.values()
@@ -199,6 +211,7 @@ class Doctor:
                 # Its history is needed (a graph, Energy, a statistics helper, code that reads it) - or kept by the user.
                 entity["history_used"] = any(u.get("history") for u in entity["used_in"])
                 entity["protected"] = entity["entity_id"] in protect
+                entity["keep_days"] = (self.settings.get("keep") or {}).get(entity["entity_id"])
             result["usage"] = seen
             self._all = {e["entity_id"]: e for e in result["entities"]}
             self._per_row = (result["size"] / result["rows"]) if result["size"] and result["rows"] else 300.0
@@ -237,8 +250,8 @@ class Doctor:
             return {"entity_id": e["entity_id"], "name": e["name"], "bytes": bytes_, "kind": kind, "uses": uses}
 
         for e in result["entities"]:
-            if e["entity_id"] in busy:
-                continue  # being cleaned right now
+            if e["entity_id"] in busy or e.get("keep_days"):
+                continue  # being cleaned right now, or kept short every night already
             if e["deleted"]:
                 deleted.append(e["entity_id"])
                 saved += e["bytes"]
@@ -260,6 +273,8 @@ class Doctor:
 
     def set_settings(self, changes: dict[str, Any]) -> dict[str, Any]:
         for key, value in changes.items():
+            if key == "keep" and isinstance(value, dict):
+                value = {e: d for e, d in value.items() if d}  # None takes an entity out of the rule
             if key in DEFAULT_SETTINGS:
                 self.settings[key] = value
         self._save()
@@ -410,7 +425,8 @@ class Doctor:
         return True
 
     async def async_cleanup(
-        self, deleted: list[str], trim: list[str], keep_days: int, backup: bool = False, repack: bool = True
+        self, deleted: list[str], trim: list[str], keep_days: int, backup: bool = False, repack: bool = True,
+        keep_rule: bool = True,
     ) -> dict[str, Any]:
         """Remove history through the recorder's own purge. This can't be undone, so a backup can be made first."""
         hass = self.hass
@@ -431,6 +447,9 @@ class Doctor:
             "repack": repack, "per_row": self._per_row,
         }
         await self._async_purge(record)
+        if keep_rule and trim:
+            # "Keep it like this": the same entities keep the same days from now on, every night.
+            self.settings["keep"] = dict(self.settings.get("keep") or {}) | {e: keep_days for e in trim}
         if deleted:
             # Long-term statistics of entities that are gone (only the recorder's own, never imported ones).
             gone = [s for s in deleted if ":" not in s]

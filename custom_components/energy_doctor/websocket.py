@@ -57,6 +57,7 @@ async def ws_fix_energy(hass: HomeAssistant, connection: websocket_api.ActiveCon
         vol.Optional("keep_days", default=3): vol.All(int, vol.Range(min=0, max=365)),
         vol.Optional("backup", default=False): bool,
         vol.Optional("repack", default=True): bool,
+        vol.Optional("keep_rule", default=True): bool,
     }
 )
 @websocket_api.require_admin
@@ -64,7 +65,7 @@ async def ws_fix_energy(hass: HomeAssistant, connection: websocket_api.ActiveCon
 async def ws_cleanup(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
     if (doctor := _doctor(hass)) is None:
         return _not_loaded(connection, msg)
-    connection.send_result(msg["id"], await doctor.async_cleanup(msg["deleted"], msg["trim"], msg["keep_days"], msg["backup"], msg["repack"]))
+    connection.send_result(msg["id"], await doctor.async_cleanup(msg["deleted"], msg["trim"], msg["keep_days"], msg["backup"], msg["repack"], msg["keep_rule"]))
 
 
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/history"})
@@ -145,6 +146,7 @@ def ws_settings(hass: HomeAssistant, connection: websocket_api.ActiveConnection,
         vol.Optional("retention"): {str: vol.Any(None, vol.All(int, vol.Range(min=1, max=365)))},
         vol.Optional("exclude"): [str],
         vol.Optional("protect"): [str],
+        vol.Optional("keep"): {str: vol.Any(None, vol.All(int, vol.Range(min=1, max=365)))},
         vol.Optional("notify_energy"): bool,
         vol.Optional("weekly_report"): bool,
     }
