@@ -123,7 +123,9 @@ async def async_plan(
     bases: dict[str, dict[str, int]] = {}
     groups: dict[str, dict[str, Any]] = {k: {"key": k, "devices": []} for k in ("climate", "meters", "sensors")}
     signals: list[dict[str, Any]] = []
-    for device in list(devices.devices.values()):
+    # Iterating the registry gives the entries (HA 2026.10+); older versions gave their ids.
+    all_devices = [d if not isinstance(d, str) else devices.async_get(d) for d in list(devices.devices)]
+    for device in [d for d in all_devices if d is not None]:
         address = ieee(device)
         entries = er.async_entries_for_device(registry, device.id, include_disabled_entities=True)
         busy = sum(entities.get(e.entity_id, {}).get("per_day", 0) for e in entries)
