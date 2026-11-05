@@ -2,12 +2,12 @@
   "config": {
     "step": {
       "user": {
-        "title": "Energi-doktor",
-        "description": "Finder forkerte tal i Energi-dashboardet og viser, hvad der fylder i databasen. Alt foregår i panelet Energi-doktor i sidemenuen."
+        "title": "Database-doktor",
+        "description": "Finder forkerte tal i Energi-dashboardet og viser, hvad der fylder i databasen. Alt foregår i panelet Database-doktor i sidemenuen."
       }
     },
     "abort": {
-      "single_instance_allowed": "Energi-doktor er allerede sat op."
+      "single_instance_allowed": "Database-doktor er allerede sat op."
     }
   },
   "options": {

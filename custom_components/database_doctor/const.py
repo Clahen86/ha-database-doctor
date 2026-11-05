@@ -1,8 +1,8 @@
-"""Constants for Energy Doctor."""
+"""Constants for Database Doctor."""
 
-DOMAIN = "energy_doctor"
-PANEL = "energy-doctor"
-STATIC = "/energy_doctor_static"
+DOMAIN = "database_doctor"
+PANEL = "database-doctor"
+STATIC = "/database_doctor_static"
 
 # How far back the energy statistics are checked for spikes and negative values.
 CHECK_DAYS = 120

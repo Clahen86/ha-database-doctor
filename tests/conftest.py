@@ -1,4 +1,4 @@
-"""Fixtures for Energy Doctor tests: every test runs with a real recorder (SQLite in memory)."""
+"""Fixtures for Database Doctor tests: every test runs with a real recorder (SQLite in memory)."""
 
 import pytest
 

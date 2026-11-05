@@ -1,14 +1,16 @@
-# Energy Doctor
+# Database Doctor
 
-[![Validate](https://github.com/Clahen86/ha-energy-doctor/actions/workflows/validate.yml/badge.svg)](https://github.com/Clahen86/ha-energy-doctor/actions/workflows/validate.yml)
+[![Validate](https://github.com/Clahen86/ha-database-doctor/actions/workflows/validate.yml/badge.svg)](https://github.com/Clahen86/ha-database-doctor/actions/workflows/validate.yml)
 
-**Your fridge used 50,000 kWh in one hour? Energy Doctor finds the wrong numbers in your energy dashboard, fixes them with one tap – and shows what fills your database and how to keep it small.**
+**Keeps your Home Assistant database small and correct: see what fills it – every entity, not just energy – clean up safely, and keep it from growing back. Plus wrong numbers in the energy dashboard fixed with one tap.**
+
+> Called *Energy Doctor* before 0.8.
 
 [English](#english) · [Dansk](#dansk)
 
 ## English
 
-Home Assistant records everything, and two things go wrong over time: a meter that resets or drops out puts absurd numbers in the energy dashboard, and the database keeps growing until Home Assistant starts and backs up slowly. Energy Doctor adds a panel to the sidebar that finds both, explains them in plain words and fixes them – only with Home Assistant's own functions, and nothing that something uses is ever touched.
+Home Assistant records everything, and two things go wrong over time: a meter that resets or drops out puts absurd numbers in the energy dashboard, and the database keeps growing until Home Assistant starts and backs up slowly. Database Doctor adds a panel to the sidebar that finds both, explains them in plain words and fixes them – only with Home Assistant's own functions, and nothing that something uses is ever touched.
 
 ### Overview
 
@@ -36,7 +38,7 @@ Home Assistant records everything, and two things go wrong over time: a meter th
 
 One row per device, with a clear status – *History used – keep*, *Used – only its value*, *Can be cleaned*, *Saves a lot* or *Deleted* – and one button that does the right thing. Tap a row to see each entity, how often it saves and where it is used: automations, scripts, scenes, graphs, dashboards, the energy dashboard, helpers and your YAML files. Filter and search when the list is long.
 
-Energy Doctor reads how each entity is used, not just where its name appears: the YAML configuration is loaded the way Home Assistant loads it (with `!include` and packages), and only what really reads the history – graphs, the energy dashboard, `statistics`, `history_stats` and `filter` sensors, and code like AppDaemon's `get_history` – keeps the history. Automations and templates only need the value now, so their old history can go. Code in add-ons that Home Assistant can't read (for example AppDaemon on Home Assistant OS) is pointed out, and **Never touch** keeps any entity out of every suggestion.
+Database Doctor reads how each entity is used, not just where its name appears: the YAML configuration is loaded the way Home Assistant loads it (with `!include` and packages), and only what really reads the history – graphs, the energy dashboard, `statistics`, `history_stats` and `filter` sensors, and code like AppDaemon's `get_history` – keeps the history. Automations and templates only need the value now, so their old history can go. Code in add-ons that Home Assistant can't read (for example AppDaemon on Home Assistant OS) is pointed out, and **Never touch** keeps any entity out of every suggestion.
 
 **Stop saving** with one tap: for Zigbee2MQTT devices the value is stopped at its source (Zigbee2MQTT's own *filtered_attributes*), so nothing new is recorded and the entity keeps its last value.
 
@@ -48,7 +50,7 @@ Energy Doctor reads how each entity is used, not just where its name appears: th
 - It uses Zigbee2MQTT's own *throttle* option, **only on devices with nothing but sensors**. Lights, plugs, buttons, motion and door sensors are never slowed down, and anything an automation or graph uses never goes below Normal. *Why not these?* lists the devices it leaves alone and why.
 - **New devices** get the same automatically, and unused signal-strength (linkquality) entities can be switched off.
 - **How long details are kept**, per group: e.g. 3 days of second-by-second detail – graphs and hourly statistics always stay.
-- **Stop saving** an entity: Energy Doctor never changes your YAML, so it collects the lines for `configuration.yaml` for you to copy.
+- **Stop saving** an entity: Database Doctor never changes your YAML, so it collects the lines for `configuration.yaml` for you to copy.
 
 ### Safe by design
 
@@ -58,20 +60,20 @@ Energy Doctor reads how each entity is used, not just where its name appears: th
 
 ## Installation
 
-1. HACS → search for **Energy Doctor** → Download. (Not in HACS yet? Add `https://github.com/Clahen86/ha-energy-doctor` as a custom repository of type *Integration*.)
+1. HACS → search for **Database Doctor** → Download. (Not in HACS yet? Add `https://github.com/Clahen86/ha-database-doctor` as a custom repository of type *Integration*.)
 2. Restart Home Assistant.
-3. Settings → Devices & services → Add integration → **Energy Doctor**.
-4. Open **Energy Doctor** in the sidebar.
+3. Settings → Devices & services → Add integration → **Database Doctor**.
+4. Open **Database Doctor** in the sidebar.
 
-Languages: English, Danish, German, Swedish and Dutch. Early version – feedback is welcome in [issues](https://github.com/Clahen86/ha-energy-doctor/issues).
+Languages: English, Danish, German, Swedish and Dutch. Early version – feedback is welcome in [issues](https://github.com/Clahen86/ha-database-doctor/issues).
 
 ---
 
 ## Dansk
 
-**Brugte dit køleskab 50.000 kWh på én time? Energi-doktor finder de forkerte tal i Energi-dashboardet, retter dem med ét tryk – og viser, hvad der fylder i databasen, og hvordan den holdes lille.**
+**Holder din Home Assistant-database lille og korrekt: se hvad der fylder – alle entiteter, ikke kun energi – ryd sikkert op, og hold den fra at vokse igen. Og forkerte tal i Energi-dashboardet rettes med ét tryk.**
 
-Home Assistant gemmer alt, og med tiden går to ting galt: en måler, der nulstilles eller falder ud, giver skøre tal i Energi, og databasen vokser, til opstart og backup bliver langsomme. Energi-doktor er et panel i sidemenuen, der finder begge dele, forklarer dem med almindelige ord og retter dem – kun med Home Assistants egne funktioner, og det, der bruges, røres aldrig.
+Home Assistant gemmer alt, og med tiden går to ting galt: en måler, der nulstilles eller falder ud, giver skøre tal i Energi, og databasen vokser, til opstart og backup bliver langsomme. Database-doktor er et panel i sidemenuen, der finder begge dele, forklarer dem med almindelige ord og retter dem – kun med Home Assistants egne funktioner, og det, der bruges, røres aldrig.
 
 ### Overblik
 
@@ -99,7 +101,7 @@ Profiler for hele huset eller niveau pr. gruppe og pr. enhed via Zigbee2MQTTs eg
 
 ### Installation
 
-1. HACS → søg efter **Energy Doctor** → Download. (Ikke i HACS endnu? Tilføj `https://github.com/Clahen86/ha-energy-doctor` som brugerdefineret repository af typen *Integration*.)
+1. HACS → søg efter **Database Doctor** → Download. (Ikke i HACS endnu? Tilføj `https://github.com/Clahen86/ha-database-doctor` som brugerdefineret repository af typen *Integration*.)
 2. Genstart Home Assistant.
-3. Indstillinger → Enheder og tjenester → Tilføj integration → **Energy Doctor**.
-4. Åbn **Energi-doktor** i sidemenuen.
+3. Indstillinger → Enheder og tjenester → Tilføj integration → **Database Doctor**.
+4. Åbn **Database-doktor** i sidemenuen.

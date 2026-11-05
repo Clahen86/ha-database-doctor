@@ -25,7 +25,7 @@ def _doctor(hass: HomeAssistant) -> Doctor | None:
 
 
 def _not_loaded(connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
-    connection.send_error(msg["id"], "not_loaded", "Energy Doctor is not set up")
+    connection.send_error(msg["id"], "not_loaded", "Database Doctor is not set up")
 
 
 @websocket_api.websocket_command(

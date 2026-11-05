@@ -1,4 +1,4 @@
-// Energy Doctor panel: tabs Overview · Energy · Data · Settings.
+// Database Doctor panel: tabs Overview · Energy · Data · Settings.
 
 const EN = {
   score: "Health",
@@ -16,7 +16,7 @@ const EN = {
   statGrowth: "Grows a day",
   statDisk: "Disk full in",
   statNever: "not soon",
-  w1t: "Welcome to Energy Doctor",
+  w1t: "Welcome to Database Doctor",
   w1: "It finds wrong numbers in the energy dashboard and shows what fills your database – and how to keep it small.",
   w2t: "Always safe",
   w2: "It only uses Home Assistant's own functions, and nothing that something uses is ever touched.",
@@ -58,7 +58,7 @@ const EN = {
   protectOff: "Allow again",
   trimRow: "Clear old history",
   historyTag: "history",
-  unseen: "Energy Doctor can't see the files of {list}. If they read history, mark those entities “Never touch”.",
+  unseen: "Database Doctor can't see the files of {list}. If they read history, mark those entities “Never touch”.",
   outsideRead: "Also read: {list}",
   stopDone: "{s} stopped at the source in Zigbee2MQTT",
   stopListed: "{l} put on the list “Stop saving”",
@@ -82,7 +82,7 @@ const EN = {
   backupHint: "Home Assistant's own backup – it can take a few minutes on a big installation.",
   cleaning: "Cleaning up …",
   provisional: "First estimate from the first hours – it gets more precise after a couple of days.",
-  title: "Energy Doctor",
+  title: "Database Doctor",
   tabs: { overview: "Overview", energy: "Energy", data: "Data", settings: "Settings" },
   working: "Looking through the database …",
   workingHint: "A big database takes a minute.",
@@ -187,11 +187,11 @@ const EN = {
   weekly: "Weekly report (Mondays)",
   notifications: "Notifications",
   stopList: "Stop saving",
-  stopListIntro: "Energy Doctor never changes your YAML. Add these lines to configuration.yaml yourself and restart:",
+  stopListIntro: "Database Doctor never changes your YAML. Add these lines to configuration.yaml yourself and restart:",
   stopListEmpty: "Nothing yet. Tap “Stop saving” on the Data tab.",
   copy: "Copy", copied: "Copied",
   aiTitle: "AI",
-  aiHint: "Pick an AI under Settings → Devices & services → Energy Doctor → Configure to have your database explained.",
+  aiHint: "Pick an AI under Settings → Devices & services → Database Doctor → Configure to have your database explained.",
   explain: "Explain my database",
   explaining: "The AI is thinking …",
   cleanTitle: "Clean up",
@@ -231,7 +231,7 @@ const DA = {
   statGrowth: "Vokser pr. dag",
   statDisk: "Disk fuld om",
   statNever: "ikke snart",
-  w1t: "Velkommen til Energi-doktor",
+  w1t: "Velkommen til Database-doktor",
   w1: "Den finder forkerte tal i Energi-dashboardet og viser, hvad der fylder i din database – og hvordan den holdes lille.",
   w2t: "Altid sikkert",
   w2: "Den bruger kun Home Assistants egne funktioner, og det, der bruges, bliver aldrig rørt.",
@@ -273,7 +273,7 @@ const DA = {
   protectOff: "Må røres igen",
   trimRow: "Ryd gammel historik",
   historyTag: "historik",
-  unseen: "Energi-doktor kan ikke se filerne fra {list}. Læser de historik, så markér de entiteter som “Rør aldrig”.",
+  unseen: "Database-doktor kan ikke se filerne fra {list}. Læser de historik, så markér de entiteter som “Rør aldrig”.",
   outsideRead: "Læser også: {list}",
   stopDone: "{s} stoppet ved kilden i Zigbee2MQTT",
   stopListed: "{l} lagt på listen “Stop med at gemme”",
@@ -297,7 +297,7 @@ const DA = {
   backupHint: "Home Assistants egen backup – det kan tage nogle minutter på en stor installation.",
   cleaning: "Rydder op …",
   provisional: "Første skøn ud fra de første timer – det bliver mere præcist efter et par dage.",
-  title: "Energi-doktor",
+  title: "Database-doktor",
   tabs: { overview: "Overblik", energy: "Energi", data: "Data", settings: "Indstillinger" },
   working: "Kigger databasen igennem …",
   workingHint: "En stor database tager et minut.",
@@ -402,11 +402,11 @@ const DA = {
   weekly: "Ugentlig rapport (mandag)",
   notifications: "Beskeder",
   stopList: "Stop med at gemme",
-  stopListIntro: "Energi-doktor ændrer aldrig din YAML. Sæt selv disse linjer ind i configuration.yaml, og genstart:",
+  stopListIntro: "Database-doktor ændrer aldrig din YAML. Sæt selv disse linjer ind i configuration.yaml, og genstart:",
   stopListEmpty: "Intet endnu. Tryk “Gem ikke” på fanen Data.",
   copy: "Kopiér", copied: "Kopieret",
   aiTitle: "AI",
-  aiHint: "Vælg en AI under Indstillinger → Enheder og tjenester → Energy Doctor → Konfigurer, så kan den forklare din database.",
+  aiHint: "Vælg en AI under Indstillinger → Enheder og tjenester → Database Doctor → Konfigurer, så kan den forklare din database.",
   explain: "Forklar min database",
   explaining: "AI'en tænker …",
   cleanTitle: "Ryd op",
@@ -446,7 +446,7 @@ const DE = {
   statGrowth: "Wächst pro Tag",
   statDisk: "Speicher voll in",
   statNever: "nicht bald",
-  w1t: "Willkommen beim Energie-Doktor",
+  w1t: "Willkommen beim Datenbank-Doktor",
   w1: "Er findet falsche Werte im Energie-Dashboard und zeigt, was deine Datenbank füllt – und wie sie klein bleibt.",
   w2t: "Immer sicher",
   w2: "Er nutzt nur Home Assistants eigene Funktionen, und was genutzt wird, bleibt unberührt.",
@@ -488,7 +488,7 @@ const DE = {
   protectOff: "Wieder erlauben",
   trimRow: "Alten Verlauf löschen",
   historyTag: "Verlauf",
-  unseen: "Energie-Doktor kann die Dateien von {list} nicht sehen. Lesen sie Verlauf, markiere diese Entitäten mit „Nie anfassen“.",
+  unseen: "Datenbank-Doktor kann die Dateien von {list} nicht sehen. Lesen sie Verlauf, markiere diese Entitäten mit „Nie anfassen“.",
   outsideRead: "Liest auch: {list}",
   stopDone: "{s} an der Quelle in Zigbee2MQTT gestoppt",
   stopListed: "{l} auf die Liste „Nicht mehr speichern“ gesetzt",
@@ -512,7 +512,7 @@ const DE = {
   backupHint: "Home Assistants eigenes Backup – das kann bei einer großen Installation ein paar Minuten dauern.",
   cleaning: "Wird aufgeräumt …",
   provisional: "Erste Schätzung aus den ersten Stunden – nach ein paar Tagen wird sie genauer.",
-  title: "Energie-Doktor",
+  title: "Datenbank-Doktor",
   tabs: { overview: "Übersicht", energy: "Energie", data: "Daten", settings: "Einstellungen" },
   working: "Die Datenbank wird durchgesehen …", workingHint: "Eine große Datenbank dauert eine Minute.",
   fresh: "Erneut prüfen", perDay: "+{n} pro Tag", healthy: "Deine Datenbank ist gesund.",
@@ -579,9 +579,9 @@ const DE = {
   keepAll: "Alles", keepDays: "{n} Tage", autoNew: "Neue Geräte bekommen automatisch dasselbe",
   notifyEnergy: "Über neue falsche Werte in Energie informieren", weekly: "Wochenbericht (montags)", notifications: "Benachrichtigungen",
   stopList: "Nicht mehr speichern",
-  stopListIntro: "Energie-Doktor ändert nie dein YAML. Füge diese Zeilen selbst in configuration.yaml ein und starte neu:",
+  stopListIntro: "Datenbank-Doktor ändert nie dein YAML. Füge diese Zeilen selbst in configuration.yaml ein und starte neu:",
   stopListEmpty: "Noch nichts. Tippe „Nicht speichern“ im Tab Daten.", copy: "Kopieren", copied: "Kopiert",
-  aiTitle: "KI", aiHint: "Wähle eine KI unter Einstellungen → Geräte & Dienste → Energy Doctor → Konfigurieren.",
+  aiTitle: "KI", aiHint: "Wähle eine KI unter Einstellungen → Geräte & Dienste → Database Doctor → Konfigurieren.",
   explain: "Meine Datenbank erklären", explaining: "Die KI denkt nach …",
   cleanTitle: "Aufräumen", cleanIntro: "Das wird mit dem eigenen Aufräumen des Recorders entfernt:",
   cleanDeleted: "Der ganze Verlauf von {n} gelöschten Geräten", cleanTrim: "Verlauf älter als {k} Tage von {n} aktiven Entitäten, die nichts nutzt",
@@ -608,7 +608,7 @@ const SV = {
   statGrowth: "Växer per dag",
   statDisk: "Disken full om",
   statNever: "inte snart",
-  w1t: "Välkommen till Energidoktorn",
+  w1t: "Välkommen till Databasdoktorn",
   w1: "Den hittar felaktiga värden i energipanelen och visar vad som fyller din databas – och hur den hålls liten.",
   w2t: "Alltid säkert",
   w2: "Den använder bara Home Assistants egna funktioner, och det som används rörs aldrig.",
@@ -650,7 +650,7 @@ const SV = {
   protectOff: "Tillåt igen",
   trimRow: "Rensa gammal historik",
   historyTag: "historik",
-  unseen: "Energidoktorn kan inte se filerna från {list}. Läser de historik, markera de entiteterna som ”Rör aldrig”.",
+  unseen: "Databasdoktorn kan inte se filerna från {list}. Läser de historik, markera de entiteterna som ”Rör aldrig”.",
   outsideRead: "Läser också: {list}",
   stopDone: "{s} stoppade vid källan i Zigbee2MQTT",
   stopListed: "{l} lagda på listan ”Sluta spara”",
@@ -674,7 +674,7 @@ const SV = {
   backupHint: "Home Assistants egen säkerhetskopia – det kan ta några minuter på en stor installation.",
   cleaning: "Städar …",
   provisional: "Första uppskattning från de första timmarna – den blir mer exakt efter ett par dagar.",
-  title: "Energidoktorn",
+  title: "Databasdoktorn",
   tabs: { overview: "Översikt", energy: "Energi", data: "Data", settings: "Inställningar" },
   working: "Går igenom databasen …", workingHint: "En stor databas tar en minut.",
   fresh: "Kontrollera igen", perDay: "+{n} per dag", healthy: "Din databas är frisk.",
@@ -741,9 +741,9 @@ const SV = {
   keepAll: "Allt", keepDays: "{n} dagar", autoNew: "Nya enheter får automatiskt samma",
   notifyEnergy: "Meddela mig om nya fel i Energi", weekly: "Veckorapport (måndagar)", notifications: "Meddelanden",
   stopList: "Sluta spara",
-  stopListIntro: "Energidoktorn ändrar aldrig din YAML. Lägg själv in dessa rader i configuration.yaml och starta om:",
+  stopListIntro: "Databasdoktorn ändrar aldrig din YAML. Lägg själv in dessa rader i configuration.yaml och starta om:",
   stopListEmpty: "Inget ännu. Tryck ”Spara inte” på fliken Data.", copy: "Kopiera", copied: "Kopierat",
-  aiTitle: "AI", aiHint: "Välj en AI under Inställningar → Enheter och tjänster → Energy Doctor → Konfigurera.",
+  aiTitle: "AI", aiHint: "Välj en AI under Inställningar → Enheter och tjänster → Database Doctor → Konfigurera.",
   explain: "Förklara min databas", explaining: "AI:n tänker …",
   cleanTitle: "Städa", cleanIntro: "Detta tas bort med recorderns egen rensning:",
   cleanDeleted: "All historik från {n} borttagna enheter", cleanTrim: "Historik äldre än {k} dagar från {n} aktiva entiteter som inget använder",
@@ -770,7 +770,7 @@ const NL = {
   statGrowth: "Groeit per dag",
   statDisk: "Schijf vol over",
   statNever: "niet snel",
-  w1t: "Welkom bij Energiedokter",
+  w1t: "Welkom bij Databasedokter",
   w1: "Hij vindt foute waarden in het energiedashboard en laat zien wat je database vult – en hoe je hem klein houdt.",
   w2t: "Altijd veilig",
   w2: "Hij gebruikt alleen de eigen functies van Home Assistant, en wat gebruikt wordt, blijft onaangeroerd.",
@@ -812,7 +812,7 @@ const NL = {
   protectOff: "Weer toestaan",
   trimRow: "Oude geschiedenis wissen",
   historyTag: "geschiedenis",
-  unseen: "Energiedokter kan de bestanden van {list} niet zien. Lezen ze geschiedenis, markeer die entiteiten dan als ‘Nooit aanraken’.",
+  unseen: "Databasedokter kan de bestanden van {list} niet zien. Lezen ze geschiedenis, markeer die entiteiten dan als ‘Nooit aanraken’.",
   outsideRead: "Leest ook: {list}",
   stopDone: "{s} gestopt bij de bron in Zigbee2MQTT",
   stopListed: "{l} op de lijst ‘Stoppen met opslaan’ gezet",
@@ -836,7 +836,7 @@ const NL = {
   backupHint: "Home Assistants eigen back-up – dat kan op een grote installatie een paar minuten duren.",
   cleaning: "Opruimen …",
   provisional: "Eerste schatting uit de eerste uren – na een paar dagen wordt die nauwkeuriger.",
-  title: "Energiedokter",
+  title: "Databasedokter",
   tabs: { overview: "Overzicht", energy: "Energie", data: "Data", settings: "Instellingen" },
   working: "De database wordt doorgekeken …", workingHint: "Een grote database duurt een minuut.",
   fresh: "Opnieuw controleren", perDay: "+{n} per dag", healthy: "Je database is gezond.",
@@ -903,9 +903,9 @@ const NL = {
   keepAll: "Alles", keepDays: "{n} dagen", autoNew: "Nieuwe apparaten krijgen automatisch hetzelfde",
   notifyEnergy: "Meld nieuwe foute waarden in Energie", weekly: "Weekrapport (maandag)", notifications: "Meldingen",
   stopList: "Stoppen met opslaan",
-  stopListIntro: "Energiedokter verandert nooit je YAML. Zet deze regels zelf in configuration.yaml en herstart:",
+  stopListIntro: "Databasedokter verandert nooit je YAML. Zet deze regels zelf in configuration.yaml en herstart:",
   stopListEmpty: "Nog niets. Tik op ‘Niet opslaan’ op het tabblad Data.", copy: "Kopiëren", copied: "Gekopieerd",
-  aiTitle: "AI", aiHint: "Kies een AI onder Instellingen → Apparaten en diensten → Energy Doctor → Configureren.",
+  aiTitle: "AI", aiHint: "Kies een AI onder Instellingen → Apparaten en diensten → Database Doctor → Configureren.",
   explain: "Leg mijn database uit", explaining: "De AI denkt na …",
   cleanTitle: "Opruimen", cleanIntro: "Dit wordt verwijderd met de eigen opschoning van de recorder:",
   cleanDeleted: "Alle geschiedenis van {n} verwijderde apparaten", cleanTrim: "Geschiedenis ouder dan {k} dagen van {n} drukke entiteiten die niets gebruikt",
@@ -924,7 +924,7 @@ const GROUP_ICON = { climate: "mdi:thermometer", meters: "mdi:lightning-bolt", s
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const SIGNAL = /(linkquality|_lqi|rssi)$/;
 
-class EnergyDoctorPanel extends HTMLElement {
+class DatabaseDoctorPanel extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
@@ -953,7 +953,7 @@ class EnergyDoctorPanel extends HTMLElement {
     this.step = 0;
     this.animate = true;
     try {
-      this.welcomed = localStorage.getItem("energy_doctor_welcomed") === "1";
+      this.welcomed = localStorage.getItem("database_doctor_welcomed") === "1";
     } catch (e) {
       this.welcomed = true;
     }
@@ -983,7 +983,7 @@ class EnergyDoctorPanel extends HTMLElement {
   }
 
   ws(type, data = {}) {
-    return this._hass.callWS({ type: `energy_doctor/${type}`, ...data });
+    return this._hass.callWS({ type: `database_doctor/${type}`, ...data });
   }
 
   num(n, digits = 1) {
@@ -1368,7 +1368,7 @@ class EnergyDoctorPanel extends HTMLElement {
     }).sort((a, b) => b.bytes - a.bytes);
   }
 
-  // The Zigbee2MQTT sensor device behind a row, when Energy Doctor can make it save less often.
+  // The Zigbee2MQTT sensor device behind a row, when Database Doctor can make it save less often.
   lowerable(r) {
     if (!this.rates || !r.key.startsWith("d:")) return null;
     const id = r.key.slice(2);
@@ -1659,7 +1659,7 @@ class EnergyDoctorPanel extends HTMLElement {
     if (a === "welcomeDone") {
       this.welcomed = true;
       try {
-        localStorage.setItem("energy_doctor_welcomed", "1");
+        localStorage.setItem("database_doctor_welcomed", "1");
       } catch (e) {
         /* private window: shown again next time */
       }
@@ -1944,4 +1944,4 @@ select{height:40px;border-radius:10px;border:1px solid var(--divider-color,#d6dc
 .done{align-items:center;text-align:center}.done ha-icon{--mdc-icon-size:56px;color:var(--success-color,#22a06b)}
 `;
 
-customElements.define("energy-doctor-panel", EnergyDoctorPanel);
+customElements.define("database-doctor-panel", DatabaseDoctorPanel);

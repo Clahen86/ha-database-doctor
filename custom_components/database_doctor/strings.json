@@ -2,12 +2,12 @@
   "config": {
     "step": {
       "user": {
-        "title": "Energy Doctor",
-        "description": "Finds wrong numbers in the energy dashboard and shows what fills your database. Everything happens in the Energy Doctor panel in the sidebar."
+        "title": "Database Doctor",
+        "description": "Finds wrong numbers in the energy dashboard and shows what fills your database. Everything happens in the Database Doctor panel in the sidebar."
       }
     },
     "abort": {
-      "single_instance_allowed": "Energy Doctor is already set up."
+      "single_instance_allowed": "Database Doctor is already set up."
     }
   },
   "options": {

@@ -1,4 +1,4 @@
-"""Energy Doctor against a real recorder database (SQLite in memory)."""
+"""Database Doctor against a real recorder database (SQLite in memory)."""
 
 from __future__ import annotations
 
@@ -16,8 +16,8 @@ from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from pytest_homeassistant_custom_component.components.recorder.common import async_wait_recording_done
 
-from custom_components.energy_doctor import energy
-from custom_components.energy_doctor.const import DOMAIN
+from custom_components.database_doctor import energy
+from custom_components.database_doctor.const import DOMAIN
 
 
 @pytest.fixture
@@ -94,14 +94,14 @@ async def test_analysis_counts_rows_and_finds_deleted_and_busy_unused(recorder_m
     hass.states.async_remove("sensor.old_thing")  # gone: no state, no registry entry …
     await hass.async_block_till_done()
     # … and nothing written for days (a sensor that is only missing since a restart is not "deleted").
-    import custom_components.energy_doctor.analysis as analysis
+    import custom_components.database_doctor.analysis as analysis
 
     overview = await doctor.async_overview(fresh=True)
     assert not {e["entity_id"]: e for e in overview["entities"]}["sensor.old_thing"]["deleted"]
     real_time = analysis.time.time
 
-    with patch("custom_components.energy_doctor.doctor.BUSY_PER_DAY", 0), patch(
-        "custom_components.energy_doctor.doctor.TRIM_KEEP_DAYS", 0
+    with patch("custom_components.database_doctor.doctor.BUSY_PER_DAY", 0), patch(
+        "custom_components.database_doctor.doctor.TRIM_KEEP_DAYS", 0
     ), patch.object(analysis.time, "time", lambda: real_time() + 4 * 86400):
         overview = await doctor.async_overview(fresh=True)
     by_id = {e["entity_id"]: e for e in overview["entities"]}
@@ -188,7 +188,7 @@ async def test_rates_only_slow_sensor_devices_and_undo(recorder_mock, hass: Home
             hass.states.async_set(e, str(20 + i))
     await async_wait_recording_done(hass)
 
-    with patch("custom_components.energy_doctor.rates.async_throttles", return_value={}):
+    with patch("custom_components.database_doctor.rates.async_throttles", return_value={}):
         plan = await doctor.async_rates()
         assert [g["key"] for g in plan["groups"]] == ["climate"]  # the plug is never slowed down
         assert {d["name"] for d in plan["groups"][0]["devices"]} == {"gang", "stue"}
@@ -257,7 +257,7 @@ async def test_opens_at_once_with_the_last_picture(recorder_mock, hass: HomeAssi
     again = await doctor.async_overview(allow_stale=True)
     assert again["stale"] and again["at"] == first["at"]
     await doctor.store.async_save({"overview": first})
-    from custom_components.energy_doctor.doctor import Doctor
+    from custom_components.database_doctor.doctor import Doctor
 
     other = Doctor(hass)
     await other.async_load()

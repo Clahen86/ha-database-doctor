@@ -1,4 +1,4 @@
-"""Energy Doctor: wrong numbers in the energy dashboard, and what fills the database."""
+"""Database Doctor: wrong numbers in the energy dashboard, and what fills the database."""
 
 from __future__ import annotations
 
@@ -18,10 +18,10 @@ from . import websocket
 from .const import DOMAIN, PANEL, STATIC
 from .doctor import Doctor
 
-type EnergyDoctorConfigEntry = ConfigEntry[Doctor]
+type DatabaseDoctorConfigEntry = ConfigEntry[Doctor]
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
-_TITLES = {"da": "Energi-doktor", "nb": "Energi-doktor", "sv": "Energidoktor", "de": "Energie-Doktor"}
+_TITLES = {"da": "Database-doktor", "nb": "Database-doktor", "sv": "Databasdoktor", "de": "Datenbank-Doktor"}
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -32,7 +32,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     return True
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: EnergyDoctorConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: DatabaseDoctorConfigEntry) -> bool:
     doctor = Doctor(hass)
     await doctor.async_load()
     entry.runtime_data = doctor
@@ -51,8 +51,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: EnergyDoctorConfigEntry)
     await panel_custom.async_register_panel(
         hass,
         frontend_url_path=PANEL,
-        webcomponent_name="energy-doctor-panel",
-        sidebar_title=_TITLES.get(hass.config.language.split("-")[0], "Energy Doctor"),
+        webcomponent_name="database-doctor-panel",
+        sidebar_title=_TITLES.get(hass.config.language.split("-")[0], "Database Doctor"),
         sidebar_icon="mdi:stethoscope",
         module_url=f"{STATIC}/panel.js?v={version}",
         require_admin=True,
@@ -60,10 +60,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: EnergyDoctorConfigEntry)
     return True
 
 
-async def _options_changed(hass: HomeAssistant, entry: EnergyDoctorConfigEntry) -> None:
+async def _options_changed(hass: HomeAssistant, entry: DatabaseDoctorConfigEntry) -> None:
     await hass.config_entries.async_reload(entry.entry_id)
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: EnergyDoctorConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: DatabaseDoctorConfigEntry) -> bool:
     frontend.async_remove_panel(hass, PANEL)
     return True

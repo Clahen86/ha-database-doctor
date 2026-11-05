@@ -1,6 +1,6 @@
 {
-  "domain": "energy_doctor",
-  "name": "Energy Doctor",
+  "domain": "database_doctor",
+  "name": "Database Doctor",
   "after_dependencies": [
     "automation",
     "backup",
@@ -21,11 +21,11 @@
     "recorder",
     "websocket_api"
   ],
-  "documentation": "https://github.com/Clahen86/ha-energy-doctor",
+  "documentation": "https://github.com/Clahen86/ha-database-doctor",
   "integration_type": "service",
   "iot_class": "calculated",
-  "issue_tracker": "https://github.com/Clahen86/ha-energy-doctor/issues",
+  "issue_tracker": "https://github.com/Clahen86/ha-database-doctor/issues",
   "requirements": [],
   "single_config_entry": true,
-  "version": "0.7.0"
+  "version": "0.8.0"
 }

@@ -1,4 +1,4 @@
-"""Energy Doctor: the analysis for the panel, the fixes and clean-ups, and their undo history."""
+"""Database Doctor: the analysis for the panel, the fixes and clean-ups, and their undo history."""
 
 from __future__ import annotations
 
@@ -53,6 +53,9 @@ class Doctor:
 
     async def async_load(self) -> None:
         data = await self.store.async_load() or {}
+        if not data:
+            # Was called Energy Doctor before 0.7: bring the settings and history along.
+            data = await Store(self.hass, 1, "energy_doctor.history").async_load() or {}
         cutoff = time.time() - KEEP_DAYS * 86400
         self.history = [h for h in data.get("history", []) if h["at"] >= cutoff]
         self.sizes = data.get("sizes", {})
@@ -143,15 +146,15 @@ class Doctor:
                     + (f" og voksede {mb(week)} denne uge" if week is not None else "") + ". "
                     + (f"{issues} forkerte tal i Energi. " if issues else "Ingen fejl i Energi. ")
                     + (f"Du kan spare {mb(overview['suggestion']['bytes'])}. " if overview["suggestion"]["bytes"] else "")
-                    + "[Åbn Energi-doktor](/energy-doctor)")
+                    + "[Åbn Database-doktor](/database-doctor)")
         else:
             text = (f"The database is {mb(overview['size'] or 0)}"
                     + (f" and grew {mb(week)} this week" if week is not None else "") + ". "
                     + (f"{issues} wrong numbers in Energy. " if issues else "No wrong numbers in Energy. ")
                     + (f"You can save {mb(overview['suggestion']['bytes'])}. " if overview["suggestion"]["bytes"] else "")
-                    + "[Open Energy Doctor](/energy-doctor)")
+                    + "[Open Database Doctor](/database-doctor)")
         persistent_notification.async_create(
-            self.hass, text, title="Energi-doktor" if self._da() else "Energy Doctor", notification_id=f"{DOMAIN}_weekly"
+            self.hass, text, title="Database-doktor" if self._da() else "Database Doctor", notification_id=f"{DOMAIN}_weekly"
         )
 
     async def _async_watch(self, _now: Any = None) -> None:
@@ -168,9 +171,9 @@ class Doctor:
         names = ", ".join(sorted({i["name"] for i in new})[:3])
         persistent_notification.async_create(
             self.hass,
-            (f"{len(new)} forkerte tal i Energi ({names}). [Åbn Energi-doktor](/energy-doctor) for at rette dem."
-             if da else f"{len(new)} wrong numbers in Energy ({names}). [Open Energy Doctor](/energy-doctor) to fix them."),
-            title="Energi-doktor" if da else "Energy Doctor",
+            (f"{len(new)} forkerte tal i Energi ({names}). [Åbn Database-doktor](/database-doctor) for at rette dem."
+             if da else f"{len(new)} wrong numbers in Energy ({names}). [Open Database Doctor](/database-doctor) to fix them."),
+            title="Database-doktor" if da else "Database Doctor",
             notification_id=f"{DOMAIN}_energy",
         )
 
@@ -352,7 +355,7 @@ class Doctor:
         result = await self.hass.services.async_call(
             "ai_task", "generate_data",
             {
-                "entity_id": ai_entity, "task_name": "Energy Doctor",
+                "entity_id": ai_entity, "task_name": "Database Doctor",
                 "instructions": (
                     f"You help a Home Assistant user understand their recorder database. Answer in {lang}, in at most "
                     "6 short sentences, plain words, no tables, no markdown headings. Say what takes up the most and why "

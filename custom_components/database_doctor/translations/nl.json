@@ -2,12 +2,12 @@
   "config": {
     "step": {
       "user": {
-        "title": "Energiedokter",
-        "description": "Vindt foute waarden in het energiedashboard en laat zien wat de database vult. Alles gebeurt in het paneel Energiedokter in de zijbalk."
+        "title": "Databasedokter",
+        "description": "Vindt foute waarden in het energiedashboard en laat zien wat de database vult. Alles gebeurt in het paneel Databasedokter in de zijbalk."
       }
     },
     "abort": {
-      "single_instance_allowed": "Energiedokter is al ingesteld."
+      "single_instance_allowed": "Databasedokter is al ingesteld."
     }
   },
   "options": {

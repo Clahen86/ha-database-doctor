@@ -2,12 +2,12 @@
   "config": {
     "step": {
       "user": {
-        "title": "Energidoktorn",
-        "description": "Hittar felaktiga värden i energipanelen och visar vad som fyller databasen. Allt sker i panelen Energidoktorn i sidomenyn."
+        "title": "Databasdoktorn",
+        "description": "Hittar felaktiga värden i energipanelen och visar vad som fyller databasen. Allt sker i panelen Databasdoktorn i sidomenyn."
       }
     },
     "abort": {
-      "single_instance_allowed": "Energidoktorn är redan inställd."
+      "single_instance_allowed": "Databasdoktorn är redan inställd."
     }
   },
   "options": {

@@ -1,4 +1,4 @@
-"""Set up once; everything happens in the Energy Doctor panel. Configure: an AI to explain the database (optional)."""
+"""Set up once; everything happens in the Database Doctor panel. Configure: an AI to explain the database (optional)."""
 
 from __future__ import annotations
 
@@ -13,21 +13,21 @@ from homeassistant.helpers import selector
 from .const import CONF_AI, DOMAIN
 
 
-class EnergyDoctorConfigFlow(ConfigFlow, domain=DOMAIN):
+class DatabaseDoctorConfigFlow(ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
-            return self.async_create_entry(title="Energy Doctor", data={})
+            return self.async_create_entry(title="Database Doctor", data={})
         return self.async_show_form(step_id="user")
 
     @staticmethod
     @callback
     def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
-        return EnergyDoctorOptionsFlow()
+        return DatabaseDoctorOptionsFlow()
 
 
-class EnergyDoctorOptionsFlow(OptionsFlow):
+class DatabaseDoctorOptionsFlow(OptionsFlow):
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
             return self.async_create_entry(data=user_input)

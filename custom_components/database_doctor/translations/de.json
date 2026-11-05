@@ -2,12 +2,12 @@
   "config": {
     "step": {
       "user": {
-        "title": "Energie-Doktor",
-        "description": "Findet falsche Werte im Energie-Dashboard und zeigt, was die Datenbank füllt. Alles passiert im Panel Energie-Doktor in der Seitenleiste."
+        "title": "Datenbank-Doktor",
+        "description": "Findet falsche Werte im Energie-Dashboard und zeigt, was die Datenbank füllt. Alles passiert im Panel Datenbank-Doktor in der Seitenleiste."
       }
     },
     "abort": {
-      "single_instance_allowed": "Energie-Doktor ist bereits eingerichtet."
+      "single_instance_allowed": "Datenbank-Doktor ist bereits eingerichtet."
     }
   },
   "options": {
