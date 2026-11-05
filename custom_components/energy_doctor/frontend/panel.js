@@ -1,6 +1,9 @@
 // Energy Doctor panel: tabs Overview · Energy · Data · Settings.
 
 const EN = {
+  lower: "Lower",
+  busyOnly: "Saves a lot",
+  loweredOne: "{n} saves less often now",
   vgroups: {"no_state": "{n} entities no longer exist", "entity_no_longer_recorded": "{n} entities are no longer recorded", "entity_not_recorded": "{n} entities are not recorded", "state_class_removed": "{n} entities no longer have a state class"},
   vexplain: {"no_state": "Old names from devices that were renamed or paired again. Their old statistics are still in the database.", "entity_no_longer_recorded": "They are excluded from the recorder (by you or an integration). The statistics from before are still there.", "entity_not_recorded": "They are excluded from the recorder. The statistics from before are still there.", "state_class_removed": "They no longer give statistics. The statistics from before are still there."},
   vclearAll: "Delete old statistics for all {n}",
@@ -152,6 +155,9 @@ const EN = {
 };
 
 const DA = {
+  lower: "Sæt ned",
+  busyOnly: "Gemmer meget",
+  loweredOne: "{n} gemmer sjældnere nu",
   vgroups: {"no_state": "{n} entiteter findes ikke længere", "entity_no_longer_recorded": "{n} entiteter gemmes ikke længere", "entity_not_recorded": "{n} entiteter gemmes ikke", "state_class_removed": "{n} entiteter har ikke længere en state class"},
   vexplain: {"no_state": "Gamle navne fra enheder, der er omdøbt eller parret igen. Deres gamle statistik ligger stadig i databasen.", "entity_no_longer_recorded": "De er slået fra i recorderen (af dig eller en integration). Statistikken fra før ligger der stadig.", "entity_not_recorded": "De er slået fra i recorderen. Statistikken fra før ligger der stadig.", "state_class_removed": "De giver ikke længere statistik. Statistikken fra før ligger der stadig."},
   vclearAll: "Slet gammel statistik for alle {n}",
@@ -303,6 +309,9 @@ const DA = {
 };
 
 const DE = {
+  lower: "Reduzieren",
+  busyOnly: "Speichert viel",
+  loweredOne: "{n} speichert jetzt seltener",
   vgroups: {"no_state": "{n} Entitäten gibt es nicht mehr", "entity_no_longer_recorded": "{n} Entitäten werden nicht mehr aufgezeichnet", "entity_not_recorded": "{n} Entitäten werden nicht aufgezeichnet", "state_class_removed": "{n} Entitäten haben keine State-Class mehr"},
   vexplain: {"no_state": "Alte Namen von Geräten, die umbenannt oder neu gekoppelt wurden. Ihre alte Statistik liegt noch in der Datenbank.", "entity_no_longer_recorded": "Sie sind im Recorder ausgeschlossen (von dir oder einer Integration). Die Statistik von vorher ist noch da.", "entity_not_recorded": "Sie sind im Recorder ausgeschlossen. Die Statistik von vorher ist noch da.", "state_class_removed": "Sie liefern keine Statistik mehr. Die Statistik von vorher ist noch da."},
   vclearAll: "Alte Statistik für alle {n} löschen",
@@ -401,6 +410,9 @@ const DE = {
 };
 
 const SV = {
+  lower: "Sänk",
+  busyOnly: "Sparar mycket",
+  loweredOne: "{n} sparar mer sällan nu",
   vgroups: {"no_state": "{n} entiteter finns inte längre", "entity_no_longer_recorded": "{n} entiteter spelas inte längre in", "entity_not_recorded": "{n} entiteter spelas inte in", "state_class_removed": "{n} entiteter har inte längre en state class"},
   vexplain: {"no_state": "Gamla namn från enheter som bytt namn eller parats igen. Deras gamla statistik finns kvar i databasen.", "entity_no_longer_recorded": "De är undantagna i recordern (av dig eller en integration). Statistiken från tidigare finns kvar.", "entity_not_recorded": "De är undantagna i recordern. Statistiken från tidigare finns kvar.", "state_class_removed": "De ger inte längre statistik. Statistiken från tidigare finns kvar."},
   vclearAll: "Ta bort gammal statistik för alla {n}",
@@ -499,6 +511,9 @@ const SV = {
 };
 
 const NL = {
+  lower: "Verlagen",
+  busyOnly: "Slaat veel op",
+  loweredOne: "{n} slaat nu minder vaak op",
   vgroups: {"no_state": "{n} entiteiten bestaan niet meer", "entity_no_longer_recorded": "{n} entiteiten worden niet meer opgenomen", "entity_not_recorded": "{n} entiteiten worden niet opgenomen", "state_class_removed": "{n} entiteiten hebben geen state class meer"},
   vexplain: {"no_state": "Oude namen van apparaten die hernoemd of opnieuw gekoppeld zijn. Hun oude statistiek staat nog in de database.", "entity_no_longer_recorded": "Ze zijn uitgesloten in de recorder (door jou of een integratie). De statistiek van eerder is er nog.", "entity_not_recorded": "Ze zijn uitgesloten in de recorder. De statistiek van eerder is er nog.", "state_class_removed": "Ze geven geen statistiek meer. De statistiek van eerder is er nog."},
   vclearAll: "Oude statistiek voor alle {n} verwijderen",
@@ -939,15 +954,29 @@ class EnergyDoctorPanel extends HTMLElement {
     }).sort((a, b) => b.bytes - a.bytes);
   }
 
+  // The Zigbee2MQTT sensor device behind a row, when Energy Doctor can make it save less often.
+  lowerable(r) {
+    if (!this.rates || !r.key.startsWith("d:")) return null;
+    const id = r.key.slice(2);
+    for (const g of this.rates.groups) {
+      const d = g.devices.find((x) => x.id === id);
+      if (d) return d.level === "rare" || (d.used && d.level === "normal") ? null : d;
+    }
+    return null;
+  }
+
   dataRow(r, max) {
     const open = this.openRows.has(r.key);
     const pct = Math.max(2, Math.round((r.bytes / (max || 1)) * 100));
     const pill = { deleted: "grey", used: "blue", busy: "amber", clean: "green" }[r.status];
     const excluded = new Set(this.settings.exclude || []);
     const stop = !r.used && !r.deleted && !r.entities.every((e) => excluded.has(e.entity_id));
+    const lower = r.status === "busy" || r.status === "used" ? this.lowerable(r) : null;
     const action = r.deleted
       ? `<button class="soft redbg" data-act="cleanRow" data-key="${esc(r.key)}">${this.t("remove")}</button>`
+      : lower ? `<button class="soft" data-act="lowerRow" data-key="${esc(r.key)}">${this.t("lower")}</button>`
       : stop ? `<button class="soft" data-act="stopRow" data-key="${esc(r.key)}">${this.t("stopSaving")}</button>` : "";
+    const statusText = r.status === "busy" && !lower ? this.t("busyOnly") : this.t(`status.${r.status}`);
     const details = open ? r.entities.map((e) => `<div class="sub">
         <div class="line"><span>${esc(e.name)}</span><span class="nowrap muted">${this.bytes(e.bytes)}</span></div>
         <div class="mono small muted">${esc(e.entity_id)} · ${esc(this.t("rows", { n: this.num(e.rows, 0), d: this.num(e.per_day, 0) }))}</div>
@@ -957,7 +986,7 @@ class EnergyDoctorPanel extends HTMLElement {
       <button class="rowhead" data-act="toggleRow" data-key="${esc(r.key)}" aria-expanded="${open}">
         <span class="line"><span class="name">${esc(r.name)}</span><span class="nowrap">${this.bytes(r.bytes)}</span></span>
         <span class="bar"><span style="width:${pct}%;background:${COLORS[r.group] || COLORS.other}"></span></span>
-        <span class="meta"><span class="pill ${pill}">${this.t(`status.${r.status}`)}</span>${r.entities.length > 1 ? `<span class="muted small">${this.t("nEntities", { n: r.entities.length })}</span>` : ""}<ha-icon class="chev" icon="${open ? "mdi:chevron-up" : "mdi:chevron-down"}"></ha-icon></span>
+        <span class="meta"><span class="pill ${pill}">${esc(statusText)}</span>${r.entities.length > 1 ? `<span class="muted small">${this.t("nEntities", { n: r.entities.length })}</span>` : ""}<ha-icon class="chev" icon="${open ? "mdi:chevron-up" : "mdi:chevron-down"}"></ha-icon></span>
       </button>
       ${action ? `<div class="rowact">${action}</div>` : ""}
       ${details}
@@ -1218,6 +1247,17 @@ class EnergyDoctorPanel extends HTMLElement {
         this.toast = this.t("stopAdded");
         this.render();
       });
+    } else if (a === "lowerRow") {
+      const r = this.rowByKey(d.key);
+      const device = this.lowerable(r);
+      if (!device) return;
+      // Its own level, as low as is safe ("rare", or "normal" when something uses it); the groups stay as chosen.
+      const overrides = { ...(this.settings.overrides || {}), [device.id]: device.used ? "normal" : "rare" };
+      this.run(async () => {
+        await this.ws("set_settings", { overrides });
+        this.overrides = overrides;
+        return { ...(await this.ws("set_rates", { levels: { ...(this.rates.chosen || {}) } })), undoable: true };
+      }, this.t("loweredOne", { n: r.name }));
     } else if (a === "unexclude") {
       this.saveSettings({ exclude: (this.settings.exclude || []).filter((e) => e !== d.id) });
     } else if (a === "copyYaml") {
