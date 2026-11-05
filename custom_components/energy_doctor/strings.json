@@ -9,5 +9,16 @@
     "abort": {
       "single_instance_allowed": "Energy Doctor is already set up."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "AI",
+        "description": "Pick an AI task entity to have the database explained in plain words in the panel. Optional.",
+        "data": {
+          "ai_entity": "AI task"
+        }
+      }
+    }
   }
 }

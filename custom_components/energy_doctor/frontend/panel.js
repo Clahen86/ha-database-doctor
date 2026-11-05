@@ -59,6 +59,33 @@ const TEXT = {
     recEnergy: "{n} hours fixed in Energy",
     recClean: "History removed for {n} entities",
     error: "Something went wrong: {e}",
+    gap: "The meter was away for {m} hours – {v} {u} came at once",
+    fill: "Fill",
+    causeUnavailable: "The meter was unavailable just before – that often gives a jump.",
+    causeZero: "The meter went to 0 just before (for example at a restart) and started over.",
+    costNote: "Its price for the same hour is fixed with it.",
+    optimise: "Optimise",
+    ratesTitle: "Save less often",
+    ratesIntro: "Zigbee2MQTT devices with only sensors can send less often. Lights, plugs, buttons, motion and door sensors are never slowed down, and anything an automation or graph uses never goes below Normal.",
+    profile: "Profile for the whole house",
+    profiles: { sparse: "Sparse", balanced: "Balanced", detailed: "Detailed" },
+    rgroups: { climate: "Temperature and climate", meters: "Energy meters", sensors: "Other sensors" },
+    levels: { often: "Often", normal: "Normal", rare: "Rarely", mixed: "Mixed" },
+    levelHelp: { often: "every change", normal: "at most every 30 s", rare: "at most every 5 min" },
+    nDevices: "{n} devices",
+    perMonth: "−{n} a month",
+    signals: "Signal strength (linkquality)",
+    signalsText: "{n} of them are used nowhere and can be switched off.",
+    on: "On",
+    off: "Off",
+    noZ2m: "No Zigbee2MQTT sensor devices found. Other devices can't be slowed down from here – use “Stop saving it” under Takes up the most.",
+    newDevices: "New devices get the same automatically.",
+    applyRates: "Save",
+    ratesDone: "{d} devices and {s} signals changed",
+    recRates: "Save less often: {n} changes",
+    backupFirst: "Make a backup first (Home Assistant's own backup)",
+    explain: "Explain my database",
+    explaining: "The AI is thinking …",
   },
   da: {
     title: "Energi-doktor",
@@ -118,6 +145,33 @@ const TEXT = {
     recEnergy: "{n} timer rettet i Energi",
     recClean: "Historik fjernet for {n} entiteter",
     error: "Noget gik galt: {e}",
+    gap: "Måleren var væk i {m} timer – {v} {u} kom på én gang",
+    fill: "Udfyld",
+    causeUnavailable: "Måleren var utilgængelig lige før – det giver tit et spring.",
+    causeZero: "Måleren gik til 0 lige før (fx ved en genstart) og startede forfra.",
+    costNote: "Prisen for samme time rettes med.",
+    optimise: "Optimer",
+    ratesTitle: "Gem sjældnere",
+    ratesIntro: "Zigbee2MQTT-enheder med kun sensorer kan sende sjældnere. Lys, stik, knapper, bevægelses- og dørsensorer bliver aldrig sat ned, og det, en automation eller graf bruger, kommer aldrig under Normal.",
+    profile: "Profil for hele huset",
+    profiles: { sparse: "Sparsom", balanced: "Balanceret", detailed: "Detaljeret" },
+    rgroups: { climate: "Temperatur og klima", meters: "Energimålere", sensors: "Andre sensorer" },
+    levels: { often: "Ofte", normal: "Normal", rare: "Sjældent", mixed: "Blandet" },
+    levelHelp: { often: "hver ændring", normal: "højst hvert 30. sek.", rare: "højst hvert 5. min." },
+    nDevices: "{n} enheder",
+    perMonth: "−{n} om måneden",
+    signals: "Signalstyrke (linkquality)",
+    signalsText: "{n} af dem bruges ingen steder og kan slås fra.",
+    on: "Til",
+    off: "Fra",
+    noZ2m: "Ingen Zigbee2MQTT-sensorer fundet. Andre enheder kan ikke sættes ned herfra – brug “Stop med at gemme” under Fylder mest.",
+    newDevices: "Nye enheder får automatisk det samme.",
+    applyRates: "Gem",
+    ratesDone: "{d} enheder og {s} signaler ændret",
+    recRates: "Gem sjældnere: {n} ændringer",
+    backupFirst: "Lav en backup først (Home Assistants egen backup)",
+    explain: "Forklar min database",
+    explaining: "AI'en tænker …",
   },
 };
 const COLORS = { sensors: "#0b6fa4", energy: "#f59e0b", lights: "#22a06b", signals: "#8b5cf6", other: "#94a3b8" };
@@ -135,6 +189,11 @@ class EnergyDoctorPanel extends HTMLElement {
     this.picked = new Set();
     this.open = new Set();
     this.message = "";
+    this.settings = {};
+    this.backup = true;
+    this.rates = null;
+    this.choice = {};
+    this.aiText = "";
   }
 
   set hass(hass) {
@@ -176,9 +235,10 @@ class EnergyDoctorPanel extends HTMLElement {
     this.view = "working";
     this.render();
     try {
-      const [data, history] = await Promise.all([this.ws("overview", { fresh }), this.ws("history")]);
+      const [data, history, settings] = await Promise.all([this.ws("overview", { fresh }), this.ws("history"), this.ws("settings")]);
       this.data = data;
       this.history = history;
+      this.settings = settings;
       this.view = "home";
     } catch (e) {
       this.message = this.t("error", { e: e.message || e });
@@ -219,19 +279,26 @@ class EnergyDoctorPanel extends HTMLElement {
     </div>`;
   }
 
+  aiCard() {
+    if (!this.settings.ai) return "";
+    if (this.aiText) return `<div class="card aicard"><div class="head"><ha-icon icon="mdi:creation"></ha-icon><b>${this.t("explain")}</b></div><p class="lead left">${esc(this.aiText)}</p></div>`;
+    return `<button class="ghost aibtn" data-act="explain"><ha-icon icon="mdi:creation"></ha-icon> ${this.t(this.explaining ? "explaining" : "explain")}</button>`;
+  }
+
   suggestionCard() {
     const s = this.data.suggestion;
-    if (!s.bytes) return `<div class="card okcard"><ha-icon icon="mdi:check-decagram"></ha-icon><span>${this.t("nothingToSave")}</span></div>`;
+    if (!s.bytes) return `<div class="card okcard"><ha-icon icon="mdi:check-decagram"></ha-icon><span class="grow">${this.t("nothingToSave")}</span>${this.settings.mqtt ? `<button class="soft" data-act="rates">${this.t("optimise")}</button>` : ""}</div>`;
     return `<div class="card hero">
       <span class="eyebrow">${this.t("suggestion")}</span>
       <span class="big">${this.t("save", { n: this.bytes(s.bytes) })}</span>
       <span>${esc(this.t("saveText", { d: s.deleted.length, t: s.trim.length, k: s.keep_days }))}</span>
-      <div class="row"><button class="white" data-act="clean">${this.t("cleanup")}</button></div>
+      <div class="row"><button class="white" data-act="clean">${this.t("cleanup")}</button>${this.settings.mqtt ? `<button class="outline" data-act="rates">${this.t("optimise")}</button>` : ""}</div>
     </div>`;
   }
 
   issueText(i) {
     const u = i.unit || "";
+    if (i.kind === "gap") return this.t("gap", { m: i.missing, v: this.num(i.value), u });
     return i.kind === "spike" ? this.t("spike", { v: this.num(i.value), u, e: `${this.num(i.expected, 2)} ${u}` }) : this.t("negative", { v: this.num(i.value), u });
   }
 
@@ -239,12 +306,17 @@ class EnergyDoctorPanel extends HTMLElement {
     return new Date(ts * 1000).toLocaleString(this.lang === "da" ? "da-DK" : "en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
   }
 
+  issueExtra(i) {
+    const cause = i.cause === "unavailable" ? this.t("causeUnavailable") : i.cause === "zero" ? this.t("causeZero") : "";
+    return `${cause ? `<div class="small muted">${esc(cause)}</div>` : ""}${this.data.energy_issues.some((c) => c.cost_of === i.statistic_id && c.start === i.start) ? `<div class="small muted">${this.t("costNote")}</div>` : ""}`;
+  }
+
   energyCard() {
-    const issues = this.data.energy_issues;
+    const issues = this.data.energy_issues.filter((i) => !i.cost_of || !this.data.energy_issues.some((e) => e.statistic_id === i.cost_of && e.start === i.start));
     if (!issues.length) return `<div class="card okcard"><ha-icon icon="mdi:lightning-bolt-circle"></ha-icon><span>${this.t("noErrors")}</span></div>`;
     const row = (i) => `<div class="irow"><div class="grow"><div class="name">${esc(i.name)}</div>
-        <div class="small ${i.kind === "spike" ? "red" : "amber"}">${esc(this.issueText(i))}</div><div class="muted small">${esc(this.when(i.start))}</div></div>
-        <button class="soft ${i.kind === "spike" ? "redbg" : "amberbg"}" data-act="fixOne" data-id="${esc(i.id)}">${this.t("fix")}</button></div>`;
+        <div class="small ${i.kind === "spike" ? "red" : "amber"}">${esc(this.issueText(i))}</div><div class="muted small">${esc(this.when(i.start))}</div>${this.issueExtra(i)}</div>
+        <button class="soft ${i.kind === "spike" ? "redbg" : "amberbg"}" data-act="fixOne" data-id="${esc(i.id)}">${i.kind === "gap" ? this.t("fill") : this.t("fix")}</button></div>`;
     return `<div class="card"><div class="head"><i class="dot" style="background:#d92d20"></i><b>${this.t("energyErrors")}</b><span class="muted small right">${this.t("found", { n: issues.length })}</span></div>
       ${issues.slice(0, 3).map(row).join("")}
       ${issues.length > 1 ? `<button class="link" data-act="energy">${this.t("seeAll")}</button>` : ""}</div>`;
@@ -287,16 +359,17 @@ class EnergyDoctorPanel extends HTMLElement {
   recentCard() {
     const list = this.history.slice(0, 4);
     if (!list.length) return "";
-    const row = (r) => `<div class="irow"><div class="grow"><div class="name">${esc(r.kind === "energy" ? this.t("recEnergy", { n: r.issues.length }) : this.t("recClean", { n: r.deleted.length + r.trim.length }))}</div>
+    const label = (r) => r.kind === "energy" ? this.t("recEnergy", { n: r.issues.length }) : r.kind === "rates" ? this.t("recRates", { n: r.done.throttles.length + r.done.disabled.length + r.done.enabled.length }) : this.t("recClean", { n: r.deleted.length + r.trim.length });
+    const row = (r) => `<div class="irow"><div class="grow"><div class="name">${esc(label(r))}</div>
         <div class="muted small">${esc(this.when(r.at))}</div></div>
-        ${r.kind === "energy" ? (r.undone ? `<span class="muted small">${this.t("undone")}</span>` : `<button class="soft" data-act="undo" data-id="${r.id}">${this.t("undo")}</button>`) : ""}</div>`;
+        ${r.kind !== "cleanup" ? (r.undone ? `<span class="muted small">${this.t("undone")}</span>` : `<button class="soft" data-act="undo" data-id="${r.id}">${this.t("undo")}</button>`) : ""}</div>`;
     return `<div class="card"><div class="head"><b>${this.t("recent")}</b></div>${list.map(row).join("")}</div>`;
   }
 
   homeView() {
     if (!this.data) return `<div class="card"><p class="red">${esc(this.message)}</p><button class="primary" data-act="fresh">${this.t("fresh")}</button></div>`;
     return `${this.message ? `<div class="card"><p class="red">${esc(this.message)}</p></div>` : ""}
-      ${this.ring()}${this.suggestionCard()}${this.energyCard()}${this.biggestCard()}${this.recentCard()}
+      ${this.ring()}${this.aiCard()}${this.suggestionCard()}${this.energyCard()}${this.biggestCard()}${this.recentCard()}
       <button class="link center-link" data-act="fresh"><ha-icon icon="mdi:refresh"></ha-icon> ${this.t("fresh")}</button>`;
   }
 
@@ -304,7 +377,7 @@ class EnergyDoctorPanel extends HTMLElement {
     const issues = this.data.energy_issues;
     const row = (i) => `<label class="irow pick"><input type="checkbox" data-pick="${esc(i.id)}" ${this.picked.has(i.id) ? "checked" : ""}><span class="box"></span>
         <div class="grow"><div class="name">${esc(i.name)}</div><div class="small ${i.kind === "spike" ? "red" : "amber"}">${esc(this.issueText(i))}</div>
-        <div class="muted small">${esc(this.when(i.start))} · <span class="mono">${esc(i.statistic_id)}</span></div></div></label>`;
+        <div class="muted small">${esc(this.when(i.start))} · <span class="mono">${esc(i.statistic_id)}</span></div>${this.issueExtra(i)}</div></label>`;
     return `<div class="card"><h2>${this.t("energyTitle")}</h2><p class="muted">${this.t("energyIntro")}</p></div>
       <div class="card">${issues.map(row).join("")}</div>
       <div class="actions"><button class="ghost" data-act="home">${this.t("back")}</button>
@@ -324,9 +397,37 @@ class EnergyDoctorPanel extends HTMLElement {
         ${s.deleted.length ? `<div class="irow"><ha-icon icon="mdi:delete-outline"></ha-icon><div class="grow">${esc(this.t("cleanDeleted", { n: s.deleted.length }))}</div></div>` : ""}
         ${s.trim.length ? `<div class="irow"><ha-icon icon="mdi:content-cut"></ha-icon><div class="grow">${esc(this.t("cleanTrim", { n: s.trim.length, k: s.keep_days }))}</div></div>` : ""}
       </div>
-      <div class="card warncard"><ha-icon icon="mdi:shield-alert-outline"></ha-icon><div class="grow"><span>${this.t("cleanWarn")}</span><br><a href="/config/backup" target="_top">${this.t("makeBackup")}</a></div></div>
+      <div class="card warncard"><ha-icon icon="mdi:shield-alert-outline"></ha-icon><div class="grow"><span>${this.t("cleanWarn")}</span>
+        ${this.settings.backup ? `<label class="irow pick nob"><input type="checkbox" id="backup" ${this.backup ? "checked" : ""}><span class="box"></span><span class="grow">${this.t("backupFirst")}</span></label>` : `<br><a href="/config/backup" target="_top">${this.t("makeBackup")}</a>`}</div></div>
       <div class="actions"><button class="ghost" data-act="home">${this.t("back")}</button>
         <button class="primary" data-act="cleanDo">${this.t("cleanDo", { n: this.bytes(s.bytes) })}</button></div>`;
+  }
+
+  ratesView() {
+    const r = this.rates;
+    if (!r.groups.length && !r.signals.count) return `<div class="card"><h2>${this.t("ratesTitle")}</h2><p class="muted">${this.t("noZ2m")}</p></div>
+      <div class="actions"><button class="primary" data-act="home">${this.t("back")}</button></div>`;
+    const cur = (key, fallback) => this.choice[key] || fallback;
+    const seg = (key, options, current) => `<div class="seg" role="radiogroup">${options.map((o) => `<button role="radio" aria-checked="${current === o}" class="${current === o ? "on" : ""}" data-act="level" data-key="${key}" data-level="${o}">${key === "signals" ? this.t(o) : this.t(`levels.${o}`)}</button>`).join("")}</div>`;
+    const icon = { climate: "mdi:thermometer", meters: "mdi:lightning-bolt", sensors: "mdi:motion-sensor" };
+    const group = (g) => {
+      const level = cur(g.key, g.level);
+      const save = g.saving[level] || 0;
+      return `<div class="card"><div class="head"><span class="gicon ${g.key}"><ha-icon icon="${icon[g.key]}"></ha-icon></span><div class="grow"><b>${this.t(`rgroups.${g.key}`)}</b>
+          <div class="muted small">${this.t("nDevices", { n: g.devices.length })}${save ? ` · ${this.t("perMonth", { n: this.bytes(save) })}` : ""}</div></div></div>
+        ${seg(g.key, ["often", "normal", "rare"], level)}
+        <div class="muted small">${this.t(`levelHelp.${level === "mixed" ? "normal" : level}`)}${g.devices.some((d) => d.used) && level === "rare" ? ` · ${esc(g.devices.filter((d) => d.used).length)} ${this.lang === "da" ? "bruges og holdes på Normal" : "are used and stay at Normal"}` : ""}</div></div>`;
+    };
+    const sig = r.signals;
+    const sigLevel = cur("signals", sig.level);
+    const profile = Object.entries(r.profiles).find(([, lv]) => Object.entries(lv).every(([k, v]) => cur(k, k === "signals" ? sig.level : (r.groups.find((g) => g.key === k)?.level ?? v)) === v))?.[0];
+    return `<div class="card"><h2>${this.t("ratesTitle")}</h2><p class="muted small">${this.t("ratesIntro")}</p></div>
+      <div class="card"><b>${this.t("profile")}</b><div class="profiles">${Object.keys(r.profiles).map((p) => `<button class="${profile === p ? "on" : ""}" data-act="profile" data-profile="${p}">${this.t(`profiles.${p}`)}</button>`).join("")}</div></div>
+      ${r.groups.map(group).join("")}
+      ${sig.count ? `<div class="card"><div class="head"><span class="gicon signals"><ha-icon icon="mdi:signal"></ha-icon></span><div class="grow"><b>${this.t("signals")}</b>
+          <div class="muted small">${this.t("signalsText", { n: sig.can_off })}${sig.saving ? ` · ${this.t("perMonth", { n: this.bytes(sig.saving) })}` : ""}</div></div></div>${seg("signals", ["on", "off"], sigLevel)}</div>` : ""}
+      <div class="card okcard"><ha-icon icon="mdi:shield-check-outline"></ha-icon><span class="small">${this.t("newDevices")} ${this.lang === "da" ? "Alt kan fortrydes." : "Everything can be undone."}</span></div>
+      <div class="actions"><button class="ghost" data-act="home">${this.t("back")}</button><button class="primary" data-act="applyRates">${this.t("applyRates")}</button></div>`;
   }
 
   doneView() {
@@ -339,7 +440,7 @@ class EnergyDoctorPanel extends HTMLElement {
   }
 
   render() {
-    const body = { working: () => this.workingView(), home: () => this.homeView(), energy: () => this.energyView(), data: () => this.dataView(), clean: () => this.cleanView(), done: () => this.doneView() }[this.view]();
+    const body = { working: () => this.workingView(), home: () => this.homeView(), energy: () => this.energyView(), data: () => this.dataView(), rates: () => this.ratesView(), clean: () => this.cleanView(), done: () => this.doneView() }[this.view]();
     this.shadowRoot.innerHTML = `<style>${STYLE}</style>
       <div class="toolbar">${customElements.get("ha-menu-button") ? "<ha-menu-button></ha-menu-button>" : ""}
         ${!["home", "working"].includes(this.view) ? `<button class="tb-back" data-act="home" aria-label="${this.t("back")}"><ha-icon icon="mdi:arrow-left"></ha-icon></button>` : ""}
@@ -351,6 +452,8 @@ class EnergyDoctorPanel extends HTMLElement {
       menu.narrow = this._narrow;
     }
     this.shadowRoot.querySelectorAll("[data-act]").forEach((el) => el.addEventListener("click", () => this.act(el.dataset)));
+    const backup = this.shadowRoot.getElementById("backup");
+    if (backup) backup.addEventListener("change", () => (this.backup = backup.checked));
     this.shadowRoot.querySelectorAll("input[data-pick]").forEach((el) => el.addEventListener("change", () => {
       if (el.checked) this.picked.add(el.dataset.pick);
       else this.picked.delete(el.dataset.pick);
@@ -394,9 +497,40 @@ class EnergyDoctorPanel extends HTMLElement {
       this.run(async () => ({ ...(await this.ws("fix_energy", { issues: ids })), undoable: true }), (r) => this.t("fixedN", { n: r.fixed }));
     } else if (a === "cleanDo") {
       const s = this.data.suggestion;
-      this.run(() => this.ws("cleanup", { deleted: s.deleted, trim: s.trim, keep_days: s.keep_days }), this.t("cleanDone"), this.t("cleanDoneText"));
+      this.run(() => this.ws("cleanup", { deleted: s.deleted, trim: s.trim, keep_days: s.keep_days, backup: Boolean(this.settings.backup && this.backup) }), this.t("cleanDone"), this.t("cleanDoneText"));
     } else if (a === "undo") {
       this.run(() => this.ws("undo", { record: d.id }), this.t("undone"));
+    } else if (a === "rates") {
+      this.view = "working";
+      this.render();
+      this.ws("rates").then((r) => {
+        this.rates = r;
+        this.choice = { ...(r.chosen || {}) };
+        this.view = "rates";
+        this.render();
+      }).catch((e) => {
+        this.message = this.t("error", { e: e.message || e });
+        this.view = "home";
+        this.render();
+      });
+    } else if (a === "level") {
+      this.choice[d.key] = d.level;
+      this.render();
+    } else if (a === "profile") {
+      this.choice = { ...this.rates.profiles[d.profile] };
+      this.render();
+    } else if (a === "applyRates") {
+      const levels = {};
+      for (const g of this.rates.groups) if (this.choice[g.key] && this.choice[g.key] !== "mixed") levels[g.key] = this.choice[g.key];
+      if (this.choice.signals) levels.signals = this.choice.signals;
+      this.run(async () => ({ ...(await this.ws("set_rates", { levels })), undoable: true }), (r) => this.t("ratesDone", { d: r.devices, s: r.signals }));
+    } else if (a === "explain") {
+      this.explaining = true;
+      this.render();
+      this.ws("explain").then((r) => (this.aiText = r.text)).catch((e) => (this.aiText = this.t("error", { e: e.message || e }))).finally(() => {
+        this.explaining = false;
+        this.render();
+      });
     } else if (a === "toggleStop") {
       if (this.open.has(d.id)) this.open.delete(d.id);
       else this.open.add(d.id);
@@ -456,6 +590,18 @@ button{font-family:inherit;cursor:pointer}
 .working{align-items:center;text-align:center;padding:48px 18px}
 .spinner{width:40px;height:40px;border-radius:50%;border:4px solid var(--divider-color,#e8ecf1);border-top-color:var(--primary-color,#0b6fa4);animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+.outline{height:48px;padding:0 16px;border-radius:12px;border:1px solid rgba(255,255,255,.7);background:transparent;color:#fff;font-size:15px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);background:var(--secondary-background-color,#eef1f4);border-radius:10px;padding:3px;gap:3px}
+.seg button{min-height:40px;border:0;border-radius:8px;background:transparent;color:var(--primary-text-color);font-size:14px}
+.seg button.on{background:var(--card-background-color,#fff);color:var(--primary-color,#0b6fa4);font-weight:500;box-shadow:0 1px 2px rgba(16,24,40,.12)}
+.profiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.profiles button{min-height:52px;border-radius:12px;border:1px solid var(--divider-color,#d6dce4);background:var(--card-background-color,#fff);color:var(--primary-text-color);font-size:15px}
+.profiles button.on{border:2px solid var(--primary-color,#0b6fa4);background:rgba(11,111,164,.08);color:var(--primary-color,#0b6fa4);font-weight:500}
+.gicon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:none}
+.gicon.climate{background:#e6f2f9;color:#0b6fa4}.gicon.meters{background:#fef3e2;color:#b54708}.gicon.sensors{background:#e7f6ee;color:#22663f}.gicon.signals{background:#f1ecfe;color:#6d3fdb}
+.aibtn{align-self:stretch;display:flex;align-items:center;justify-content:center;gap:8px}
+.aicard .lead.left{text-align:left}
+.nob{border:0;padding:8px 0 0}
 .done{align-items:center;text-align:center}.done ha-icon{--mdc-icon-size:56px;color:var(--success-color,#22a06b)}
 `;
 

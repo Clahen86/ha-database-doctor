@@ -35,6 +35,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: EnergyDoctorConfigEntry)
     await doctor.async_load()
     entry.runtime_data = doctor
     entry.async_on_unload(doctor.async_stop)
+    entry.async_on_unload(entry.add_update_listener(_options_changed))
     version = (await async_get_integration(hass, DOMAIN)).version
     await panel_custom.async_register_panel(
         hass,
@@ -46,6 +47,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: EnergyDoctorConfigEntry)
         require_admin=True,
     )
     return True
+
+
+async def _options_changed(hass: HomeAssistant, entry: EnergyDoctorConfigEntry) -> None:
+    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: EnergyDoctorConfigEntry) -> bool:

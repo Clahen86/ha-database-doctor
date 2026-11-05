@@ -9,13 +9,13 @@ import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 
-from .const import DOMAIN
+from .const import CONF_AI, DOMAIN
 from .doctor import Doctor
 
 
 @callback
 def async_setup(hass: HomeAssistant) -> None:
-    for command in (ws_overview, ws_fix_energy, ws_cleanup, ws_history, ws_undo):
+    for command in (ws_overview, ws_fix_energy, ws_cleanup, ws_history, ws_undo, ws_rates, ws_set_rates, ws_explain, ws_settings):
         websocket_api.async_register_command(hass, command)
 
 
@@ -52,6 +52,7 @@ async def ws_fix_energy(hass: HomeAssistant, connection: websocket_api.ActiveCon
         vol.Optional("deleted", default=[]): [str],
         vol.Optional("trim", default=[]): [str],
         vol.Optional("keep_days", default=3): vol.All(int, vol.Range(min=0, max=365)),
+        vol.Optional("backup", default=False): bool,
     }
 )
 @websocket_api.require_admin
@@ -59,7 +60,7 @@ async def ws_fix_energy(hass: HomeAssistant, connection: websocket_api.ActiveCon
 async def ws_cleanup(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
     if (doctor := _doctor(hass)) is None:
         return _not_loaded(connection, msg)
-    connection.send_result(msg["id"], await doctor.async_cleanup(msg["deleted"], msg["trim"], msg["keep_days"]))
+    connection.send_result(msg["id"], await doctor.async_cleanup(msg["deleted"], msg["trim"], msg["keep_days"], msg["backup"]))
 
 
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/history"})
@@ -78,3 +79,54 @@ async def ws_undo(hass: HomeAssistant, connection: websocket_api.ActiveConnectio
     if (doctor := _doctor(hass)) is None:
         return _not_loaded(connection, msg)
     connection.send_result(msg["id"], {"undone": await doctor.async_undo(msg["record"])})
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/rates"})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_rates(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    if (doctor := _doctor(hass)) is None:
+        return _not_loaded(connection, msg)
+    connection.send_result(msg["id"], await doctor.async_rates())
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/set_rates",
+        vol.Required("levels"): {str: vol.In(["often", "normal", "rare", "on", "off"])},
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_set_rates(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    if (doctor := _doctor(hass)) is None:
+        return _not_loaded(connection, msg)
+    connection.send_result(msg["id"], await doctor.async_set_rates(msg["levels"]))
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/explain"})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_explain(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    entry = next(iter(hass.config_entries.async_loaded_entries(DOMAIN)), None)
+    if entry is None or not (ai := entry.options.get(CONF_AI)):
+        connection.send_error(msg["id"], "no_ai", "No AI chosen (Configure on the integration)")
+        return
+    try:
+        text = await entry.runtime_data.async_explain(ai, hass.config.language)
+    except Exception as err:  # noqa: BLE001 - shown in the panel
+        connection.send_error(msg["id"], "ai_failed", str(err))
+        return
+    connection.send_result(msg["id"], {"text": text})
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/settings"})
+@websocket_api.require_admin
+@callback
+def ws_settings(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    entry = next(iter(hass.config_entries.async_loaded_entries(DOMAIN)), None)
+    connection.send_result(msg["id"], {
+        "ai": bool(entry and entry.options.get(CONF_AI)),
+        "backup": hass.services.has_service("backup", "create_automatic"),
+        "mqtt": "mqtt" in hass.config.components,
+    })

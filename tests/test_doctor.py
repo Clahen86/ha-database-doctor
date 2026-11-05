@@ -34,15 +34,16 @@ def _hours(n: int) -> list:
     return [start + timedelta(hours=i) for i in range(n)]
 
 
-async def _meter(hass: HomeAssistant, statistic_id: str, changes: list[float]) -> None:
+async def _meter(hass: HomeAssistant, statistic_id: str, changes: list[float], skip: set[int] = frozenset()) -> None:
     metadata = {
         "has_sum": True, "mean_type": 0, "name": "Fridge", "source": "recorder",
         "statistic_id": statistic_id, "unit_class": "energy", "unit_of_measurement": "kWh",
     }
     total, rows = 0.0, []
-    for hour, change in zip(_hours(len(changes)), changes, strict=True):
+    for n, (hour, change) in enumerate(zip(_hours(len(changes)), changes, strict=True)):
         total += change
-        rows.append({"start": hour, "sum": total, "state": total})
+        if n not in skip:  # a missing hour: the meter was away
+            rows.append({"start": hour, "sum": total, "state": total})
     hass.states.async_set(statistic_id, str(total), {"unit_of_measurement": "kWh", "state_class": "total_increasing"})
     async_import_statistics(hass, metadata, rows)
     await async_wait_recording_done(hass)
@@ -59,7 +60,7 @@ async def test_finds_and_fixes_a_spike_and_a_negative_hour_and_undoes(recorder_m
     changes[30] = 50.0  # a meter that suddenly reports 50 kWh in one hour
     changes[45] = -3.0  # and a reset that went negative
     await _meter(hass, "sensor.fridge_energy", changes)
-    with patch.object(energy, "async_energy_statistics", return_value={"sensor.fridge_energy": "device"}):
+    with patch.object(energy, "async_energy_statistics", return_value=({"sensor.fridge_energy": "device"}, {})):
         overview = await doctor.async_overview(fresh=True)
     issues = overview["energy_issues"]
     assert sorted(i["kind"] for i in issues) == ["negative", "spike"]
@@ -111,3 +112,83 @@ async def test_analysis_counts_rows_and_finds_deleted_and_busy_unused(recorder_m
     assert result["deleted"] == 1
     overview = await doctor.async_overview(fresh=True)
     assert "sensor.old_thing" not in {e["entity_id"] for e in overview["entities"]}
+
+
+async def test_fills_a_gap_and_fixes_the_price_of_the_same_hour(recorder_mock, hass: HomeAssistant, doctor) -> None:
+    """A meter away for 4 hours gets its jump spread over them; a spike's cost hour is fixed together with it."""
+    changes = [0.5] * 60
+    changes[36:40] = [0.0] * 4  # the meter is away for 4 hours …
+    changes[40] = 2.5  # … and then reports those 4 hours and this one at once: 5 x 0.5
+    await _meter(hass, "sensor.heat_pump_energy", changes, skip={36, 37, 38, 39})
+    spiky = [0.2] * 60
+    spiky[20] = 80.0
+    await _meter(hass, "sensor.grid_energy", spiky)
+    cost = [0.5] * 60
+    cost[20] = 200.0
+    await _meter(hass, "sensor.grid_energy_cost", cost)
+    stats = {"sensor.heat_pump_energy": "device", "sensor.grid_energy": "grid", "sensor.grid_energy_cost": "grid"}
+    with patch.object(energy, "async_energy_statistics", return_value=(stats, {"sensor.grid_energy_cost": "sensor.grid_energy"})):
+        overview = await doctor.async_overview(fresh=True)
+    by_stat = {i["statistic_id"]: i for i in overview["energy_issues"]}
+    gap = by_stat["sensor.heat_pump_energy"]
+    assert gap["kind"] == "gap" and gap["missing"] == 4
+    assert by_stat["sensor.grid_energy_cost"]["cost_of"] == "sensor.grid_energy"
+
+    # The user ticks the gap and the grid spike; the grid's cost of that hour comes along.
+    result = await doctor.async_fix_energy([gap["id"], by_stat["sensor.grid_energy"]["id"]])
+    await async_wait_recording_done(hass)
+    assert result["fixed"] == 3
+    heat = await get_instance(hass).async_add_executor_job(_changes, hass, "sensor.heat_pump_energy")
+    assert max(heat) == 0.5 and len(heat) == 60
+    price = await get_instance(hass).async_add_executor_job(_changes, hass, "sensor.grid_energy_cost")
+    assert max(price) == 0.5
+
+    assert await doctor.async_undo(result["id"])
+    await async_wait_recording_done(hass)
+    heat = await get_instance(hass).async_add_executor_job(_changes, hass, "sensor.heat_pump_energy")
+    assert 2.5 in heat and heat.count(0.0) == 4
+
+
+@pytest.mark.parametrize("expected_lingering_timers", [True])  # the MQTT test client
+async def test_rates_only_slow_sensor_devices_and_undo(recorder_mock, hass: HomeAssistant, doctor, mqtt_mock) -> None:
+    """Sensor-only Zigbee2MQTT devices get Zigbee2MQTT's throttle; plugs never; unused signals are switched off."""
+    from homeassistant.helpers import device_registry as dr
+
+    mqtt_entry = hass.config_entries.async_entries("mqtt")[0]
+    devices, registry = dr.async_get(hass), er.async_get(hass)
+
+    def device(ieee: str, name: str, entities: list[tuple[str, str, str | None]]) -> None:
+        d = devices.async_get_or_create(config_entry_id=mqtt_entry.entry_id, identifiers={("mqtt", f"zigbee2mqtt_{ieee}")}, name=name)
+        for domain, object_id, device_class in entities:
+            registry.async_get_or_create(domain, "mqtt", f"{ieee}_{object_id}", suggested_object_id=f"{name}_{object_id}",
+                                         device_id=d.id, config_entry=mqtt_entry, original_device_class=device_class)
+
+    device("0x00158d0001a2b3c4", "gang", [("sensor", "temperature", "temperature"), ("sensor", "linkquality", None)])
+    device("0x00158d0001a2b3c5", "stue", [("sensor", "temperature", "temperature")])
+    device("0x00158d0001a2b3c6", "stik", [("switch", "switch", None), ("sensor", "power", "power")])
+    assert await async_setup_component(
+        hass, "automation",
+        {"automation": {"alias": "Varme", "triggers": {"trigger": "state", "entity_id": "sensor.stue_temperature"}, "actions": []}},
+    )
+    for i in range(5):
+        for e in ("sensor.gang_temperature", "sensor.stue_temperature", "sensor.gang_linkquality", "sensor.stik_power"):
+            hass.states.async_set(e, str(20 + i))
+    await async_wait_recording_done(hass)
+
+    with patch("custom_components.energy_doctor.rates.async_throttles", return_value={}):
+        plan = await doctor.async_rates()
+        assert [g["key"] for g in plan["groups"]] == ["climate"]  # the plug is never slowed down
+        assert {d["name"] for d in plan["groups"][0]["devices"]} == {"gang", "stue"}
+        mqtt_mock.async_publish.reset_mock()
+        result = await doctor.async_set_rates({"climate": "rare", "signals": "off"})
+    assert result["devices"] == 2 and result["signals"] == 1
+    sent = {c.args[1]: c.args[0] for c in mqtt_mock.async_publish.call_args_list}
+    assert sent['{"id": "0x00158d0001a2b3c4", "options": {"throttle": 300}}'] == "zigbee2mqtt/bridge/request/device/options"
+    assert '{"id": "0x00158d0001a2b3c5", "options": {"throttle": 30}}' in sent  # used in an automation: never "rare"
+    assert registry.async_get("sensor.gang_linkquality").disabled_by is er.RegistryEntryDisabler.USER
+
+    mqtt_mock.async_publish.reset_mock()
+    assert await doctor.async_undo(result["id"])
+    sent = {c.args[1] for c in mqtt_mock.async_publish.call_args_list}
+    assert '{"id": "0x00158d0001a2b3c4", "options": {"throttle": 0}}' in sent
+    assert registry.async_get("sensor.gang_linkquality").disabled_by is None

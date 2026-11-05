@@ -8,11 +8,15 @@ Energy Doctor adds a panel to the sidebar:
 
 - **Wrong numbers in Energy:** finds hours with spikes (a fridge using 50,000 kWh in one hour) and negative hours, and sets them to what is normal for that meter – with Home Assistant's own *Adjust sum*. Every fix can be undone.
 - **What takes up the most:** how big the database is, how fast it grows, when the disk is full, and which entities take up the space – with how often they save and where they are used (automations, scripts, scenes, graphs, dashboards, the energy dashboard, helpers, YAML).
-- **Clean up:** removes the history of devices that are gone, and old history of busy entities that nothing uses, with the recorder's own purge. Anything something uses is never suggested.
+- **Save less often:** three levels per group (temperature and climate, energy meters, other sensors) and profiles for the whole house (Sparse, Balanced, Detailed). It uses Zigbee2MQTT's own *throttle* option, only on devices that have nothing but sensors – lights, plugs, buttons, motion and door sensors are never slowed down, and anything that is used never goes below Normal. New devices get the same. Unused signal-strength entities can be switched off. Everything can be undone.
+- **Gaps:** when a meter was offline and everything came at once, the use is spread over the missing hours. The price of the same hour is fixed together with the energy, and the panel says why a meter jumped (it was unavailable or went to 0).
+- **A watch:** twice a day it checks for new wrong numbers and tells you.
+- **Explain with AI (optional):** pick an AI task entity under *Configure*, and the panel explains your database in plain words.
+- **Clean up:** removes the history of devices that are gone, and old history of busy entities that nothing uses, with the recorder's own purge – after a Home Assistant backup if you want. Anything something uses is never suggested.
 
 Energy Doctor only changes data through Home Assistant's own recorder functions. It never writes your YAML files: to stop saving an entity it shows the lines to add yourself.
 
-> Early version (0.1). Saving less often per group and profiles for the whole house come next.
+> Early version (0.2).
 
 ## Installation
 

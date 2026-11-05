@@ -9,5 +9,16 @@
     "abort": {
       "single_instance_allowed": "Energi-doktor er allerede sat op."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "AI",
+        "description": "Vælg en AI-opgave-entitet, så panelet kan forklare databasen med almindelige ord. Valgfrit.",
+        "data": {
+          "ai_entity": "AI-opgave"
+        }
+      }
+    }
   }
 }

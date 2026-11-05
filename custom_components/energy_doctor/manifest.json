@@ -6,6 +6,7 @@
     "backup",
     "energy",
     "lovelace",
+    "mqtt",
     "scene",
     "script"
   ],
@@ -26,5 +27,5 @@
   "issue_tracker": "https://github.com/Clahen86/ha-energy-doctor/issues",
   "requirements": [],
   "single_config_entry": true,
-  "version": "0.1.0"
+  "version": "0.2.0"
 }
