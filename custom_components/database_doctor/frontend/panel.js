@@ -1086,6 +1086,7 @@ class DatabaseDoctorPanel extends HTMLElement {
   }
 
   ago(ts) {
+    if (!ts) return this.t("agoNow");
     const min = Math.max(0, Math.round((Date.now() / 1000 - ts) / 60));
     if (min < 2) return this.t("agoNow");
     if (min < 120) return this.t("agoMin", { n: min });
