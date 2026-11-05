@@ -538,23 +538,34 @@ class Doctor:
         """The undo history, newest first; a clean-up shows how much smaller the database got since."""
         now = self._cache[1]["size"] if self._cache else (sorted(self.sizes.items())[-1][1] if self.sizes else None)
         result = []
+        newest = True  # the database's change is shown on the newest clean-up only, not counted twice
         for record in reversed(self.history):
             item = dict(record)
+            if record["kind"] == "cleanup" and not newest:
+                result.append(item)
+                continue
             if record["kind"] == "cleanup":
-                # Freed inside the database at once; the file itself only shrinks after the repack.
-                if record.get("finished") and "rows_removed" not in record and record.get("rows_before") and self._all:
+                newest = False
+                # The size before the first of the recent clean-ups: what the database was before it all began.
+                before = max(
+                    (r.get("size_before") or 0 for r in self.history
+                     if r["kind"] == "cleanup" and record["at"] - r["at"] < 2 * 86400),
+                    default=0,
+                )
+                # The real change of the database since just before the clean-up (the file shrinks after the repack);
+                # before that, an estimate of what was freed inside it.
+                before = before or record.get("size_before") or record.get("size_before_repack")
+                saved = before - now if before and now else 0
+                repack_started = record.get("repack_started")
+                if saved > max(10_000_000, (before or 0) * 0.02):
+                    item["saved"] = saved
+                elif record.get("finished") and "rows_removed" not in record and record.get("rows_before") and self._all:
                     record["rows_removed"] = max(0, record["rows_before"] - sum(
                         self._all.get(e, {}).get("rows", 0) for e in record["deleted"] + record["trim"]))
                     self._save()
-                if record.get("rows_removed"):
+                if not item.get("saved") and record.get("rows_removed"):
                     item["freed"] = round(record["rows_removed"] * record.get("per_row", self._per_row))
-                before = record.get("size_before_repack") or record.get("size_before")
-                if before and now and before - now > 1_000_000:
-                    item["saved"] = before - now
-                    if record.get("repacked") is False and record.get("size_before_repack"):
-                        record["repacked"] = True
-                        self._save()
-                item["repacking"] = record.get("repacked") is False and not record.get("repack_skipped")
+                item["repacking"] = bool(repack_started) and not item.get("saved") and time.time() - repack_started < 7200
             result.append(item)
         return result
 
