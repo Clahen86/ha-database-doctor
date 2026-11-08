@@ -211,6 +211,57 @@ _KNOWN_DOMAINS = {
 }
 
 
+APP_FILES = (".yaml", ".yml", ".json", ".toml", ".conf", ".ini")
+APP_ENTITY = re.compile(r"\b((?:sensor|binary_sensor|input_number|input_boolean|input_select|input_datetime|number|select|switch|"
+                        r"climate|weather|device_tracker|person|counter|button|event|water_heater)\.[a-z0-9_]+)\b")
+
+
+def _scan_app_settings(known: set[str], skip: list[str]) -> dict[str, set[str]]:
+    """entity_id -> {app folder} for every app (add-on) whose own settings name it - Energy Pilot, Predbat, EMHASS …
+
+    Apps keep the sensors they read in their settings files. Anything named there counts as used, with its history:
+    better one entity kept too many than history an app needs taken away."""
+    found: dict[str, set[str]] = {}
+    if not os.path.isdir("/addon_configs"):
+        return found
+    try:
+        folders = [os.path.join("/addon_configs", d) for d in os.listdir("/addon_configs")]
+    except OSError:
+        return found
+    budget = MAX_FILES
+    for root in folders:
+        if not os.path.isdir(root) or any(os.path.samefile(root, r) for r in skip if os.path.exists(r)):
+            continue  # code folders (AppDaemon …) are read more closely by _scan_outside
+        for folder, dirs, files in os.walk(root):
+            dirs[:] = [d for d in dirs if not d.startswith(".") and d not in ("node_modules", "__pycache__", "lib", "cache")]
+            if folder.count(os.sep) - root.count(os.sep) > 3:
+                dirs[:] = []
+            for name in files:
+                if not name.endswith(APP_FILES) or ".bak" in name or budget <= 0:
+                    continue
+                path = os.path.join(folder, name)
+                try:
+                    if os.path.getsize(path) > 500_000:
+                        continue
+                    with open(path, encoding="utf-8", errors="ignore") as file:
+                        text = file.read()
+                except OSError:
+                    continue
+                budget -= 1
+                for entity_id in set(APP_ENTITY.findall(text)) & known:
+                    found.setdefault(entity_id, set()).add(os.path.basename(root))
+    return found
+
+
+def _app_names(hass: HomeAssistant) -> dict[str, str]:
+    try:
+        from homeassistant.components.hassio import get_addons_list
+
+        return {str(a.get("slug", "")): str(a.get("name", "")) for a in get_addons_list(hass) or []}
+    except Exception:  # noqa: BLE001 - not Home Assistant OS / Supervised
+        return {}
+
+
 async def async_addons_without_access(hass: HomeAssistant, roots: list[str]) -> list[str]:
     """Add-ons that can run code using the history (AppDaemon, Node-RED …) whose files Home Assistant can't read."""
     try:
@@ -268,6 +319,13 @@ async def async_uses(hass: HomeAssistant) -> tuple[dict[str, list[dict[str, Any]
     for entity_id, places in outside.items():
         for name, history in sorted(places):
             _add(uses, entity_id, "outside", name, history)
+    # Apps (add-ons) that name sensors in their own settings: their history is needed.
+    known = {s.entity_id for s in hass.states.async_all()}
+    apps = await hass.async_add_executor_job(_scan_app_settings, known, roots)
+    names = _app_names(hass)
+    for entity_id, folders in apps.items():
+        for folder in sorted(folders):
+            _add(uses, entity_id, "outside", f"App: {names.get(folder) or folder}", True)
     unseen = await async_addons_without_access(hass, roots)
     return uses, {"unseen_addons": unseen, "outside_read": [os.path.basename(r) for r in roots]}
 
