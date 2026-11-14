@@ -1,5 +1,6 @@
 // Database Doctor panel: tabs Overview · Energy · Data · Settings.
 import { defineSupport, supportText } from "./support.js";
+import { defineSuggest } from "./suggest.js";
 
 const EN = {
   score: "Health",
@@ -1574,6 +1575,13 @@ class DatabaseDoctorPanel extends HTMLElement {
       this._sup = this._sup || document.createElement(defineSupport("database_doctor"));
       this._sup.hass = this._hass;
       slot.appendChild(this._sup);
+      // "Fits your home too" and "From the same developer" (suggest.js) under Help, kept between renders.
+      for (const mode of ["card", "list"]) {
+        const k = `_sg_${mode}`;
+        if (!this[k]) { this[k] = document.createElement(defineSuggest("database_doctor")); this[k].setAttribute("mode", mode); }
+        this[k].hass = this._hass;
+        slot.appendChild(this[k]);
+      }
     }
     this.bind();
   }
