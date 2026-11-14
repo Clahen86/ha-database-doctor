@@ -58,6 +58,10 @@ Database Doctor reads how each entity is used, not just where its name appears: 
 - Fixes and changes of how often devices save can be undone. A clean-up can't, so it offers Home Assistant's own backup first.
 - Your YAML files are never written.
 
+### Help and answers
+
+Press **🛟 Help** at the top of the panel to write what's wrong and attach up to 3 pictures. It goes privately to the developer with a short diagnosis (no names, addresses or passwords) – only when you press *Send*. When the developer answers – also on an error the app reported – the answer shows under 🛟 Help with a notification in Home Assistant, and you can write back. Errors in the app are sent anonymously so they can be fixed; turn it off under 🛟 Help.
+
 ## Installation
 
 1. HACS → search for **Database Doctor** → Download. (Not in HACS yet? Add `https://github.com/Clahen86/ha-database-doctor` as a custom repository of type *Integration*.)
@@ -105,3 +109,7 @@ Profiler for hele huset eller niveau pr. gruppe og pr. enhed via Zigbee2MQTTs eg
 2. Genstart Home Assistant.
 3. Indstillinger → Enheder og tjenester → Tilføj integration → **Database Doctor**.
 4. Åbn **Database-doktor** i sidemenuen.
+
+### Hjælp og svar
+
+Tryk på **🛟 Hjælp** øverst i panelet for at skrive, hvad der er galt, og vedhæfte op til 3 billeder. Det går privat til udvikleren med en kort diagnose (ingen navne, adresser eller koder) – kun når du trykker *Send*. Når udvikleren svarer – også på en fejl, appen har sendt – står svaret under 🛟 Hjælp, og du får en besked i Home Assistant. Du kan skrive tilbage derfra. Fejl i appen sendes anonymt, så de kan blive rettet; slå det fra under 🛟 Hjælp.

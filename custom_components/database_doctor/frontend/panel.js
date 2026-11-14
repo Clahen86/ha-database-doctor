@@ -1,4 +1,5 @@
 // Database Doctor panel: tabs Overview · Energy · Data · Settings.
+import { defineSupport, supportText } from "./support.js";
 
 const EN = {
   score: "Health",
@@ -962,6 +963,7 @@ class DatabaseDoctorPanel extends HTMLElement {
   set hass(hass) {
     const first = !this._hass;
     this._hass = hass;
+    if (this._sup) this._sup.hass = hass;
     this.toggleAttribute("dark", !!hass.themes?.darkMode);
     if (first) this.load();
   }
@@ -1546,6 +1548,7 @@ class DatabaseDoctorPanel extends HTMLElement {
     else if (this.view === "working") body = this.workingView();
     else if (this.view === "clean") body = this.cleanView();
     else if (this.view === "done") body = this.doneView();
+    else if (this.view === "support") body = `<div id="support-slot"></div>`;
     else if (!this.data) body = `<div class="card"><p class="red">${esc(this.message)}</p><button class="primary" data-act="fresh">${this.t("fresh")}</button></div>`;
     else body = `${this.message ? `<div class="card"><p class="red">${esc(this.message)}</p></div>` : ""}${{ overview: () => this.overviewTab(), energy: () => this.energyTab(), data: () => this.dataTab(), settings: () => this.settingsTab() }[this.tab]()}`;
     // The badge counts things to look at: each wrong hour, and each group of statistics warnings.
@@ -1555,8 +1558,8 @@ class DatabaseDoctorPanel extends HTMLElement {
     const y = this.scrollTop;
     this.shadowRoot.innerHTML = `<style>${STYLE}</style>
       <div class="top"><div class="toolbar">${customElements.get("ha-menu-button") ? "<ha-menu-button></ha-menu-button>" : ""}
-        ${["clean", "done"].includes(this.view) ? `<button class="tb-back" data-act="tabs" aria-label="${this.t("back")}"><ha-icon icon="mdi:arrow-left"></ha-icon></button>` : ""}
-        <div class="tb-title">${this.t("title")}</div></div>${tabBar}</div>
+        ${["clean", "done", "support"].includes(this.view) ? `<button class="tb-back" data-act="tabs" aria-label="${this.t("back")}"><ha-icon icon="mdi:arrow-left"></ha-icon></button>` : ""}
+        <div class="tb-title">${this.t("title")}</div>${this.view !== "support" ? `<button class="tb-help" data-act="help">🛟 ${supportText(this._hass, "help")}</button>` : ""}</div>${tabBar}</div>
       <div class="page ${tabs && this.data && this.welcomed && ["overview", "energy"].includes(this.tab) ? "cols" : ""} ${this.animate && this.data ? "anim" : ""}">${body}</div>
       ${this.snack ? `<div class="snack" role="status"><span class="grow">${esc(this.snack.text)}</span>${this.snack.undo ? `<button class="snackbtn" data-act="undo" data-id="${this.snack.undo}">${this.t("snackUndo")}</button>` : ""}<button class="snackx" data-act="snackClose" aria-label="×"><ha-icon icon="mdi:close"></ha-icon></button></div>` : ""}`;
     if (this.data && this.view === "tabs") this.animate = false;
@@ -1565,6 +1568,12 @@ class DatabaseDoctorPanel extends HTMLElement {
     if (menu) {
       menu.hass = this._hass;
       menu.narrow = this._narrow;
+    }
+    const slot = this.shadowRoot.getElementById("support-slot");
+    if (slot) {  // one element kept between renders, so a half-written message isn't lost
+      this._sup = this._sup || document.createElement(defineSupport("database_doctor"));
+      this._sup.hass = this._hass;
+      slot.appendChild(this._sup);
     }
     this.bind();
   }
@@ -1653,6 +1662,10 @@ class DatabaseDoctorPanel extends HTMLElement {
   act(d) {
     const a = d.act;
     this.toast = "";
+    if (a === "help") {
+      this.view = "support";
+      return this.render();
+    }
     if (a === "welcomeNext") {
       this.step += 1;
       return this.render();
@@ -1820,7 +1833,7 @@ const STYLE = `
 :host{display:block;height:100vh;overflow-y:auto;background:var(--primary-background-color,#f2f4f7);color:var(--primary-text-color,#1c2430);font-family:var(--paper-font-body1_-_font-family,Roboto,system-ui,sans-serif)}
 .top{position:sticky;top:0;z-index:3}
 .toolbar{height:56px;display:flex;align-items:center;gap:4px;padding:0 8px;background:var(--app-header-background-color,var(--primary-color,#03a9f4));color:var(--app-header-text-color,#fff)}
-.tb-title{font-size:20px;font-weight:400;margin-left:8px}
+.tb-title{font-size:20px;font-weight:400;margin-left:8px}.tb-help{margin-left:auto;background:rgba(255,255,255,.18);border:0;color:inherit;font:inherit;font-weight:600;font-size:14px;padding:6px 14px;border-radius:99px;cursor:pointer}.tb-help:hover{background:rgba(255,255,255,.28)}
 .tb-back{background:none;border:0;color:inherit;width:44px;height:44px;border-radius:50%;cursor:pointer}
 .tabs{display:flex;background:var(--app-header-background-color,var(--primary-color,#03a9f4));overflow-x:auto;scrollbar-width:none}
 .tabs button{flex:1 0 auto;min-height:48px;padding:0 14px;border:0;background:none;color:var(--app-header-text-color,#fff);opacity:.75;font-size:14px;font-weight:500;letter-spacing:.3px;border-bottom:3px solid transparent;display:flex;align-items:center;justify-content:center;gap:6px}

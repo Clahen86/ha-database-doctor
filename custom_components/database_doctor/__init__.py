@@ -47,6 +47,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: DatabaseDoctorConfigEntr
         entry.async_on_unload(hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _resume))
     entry.async_on_unload(doctor.async_stop)
     entry.async_on_unload(entry.add_update_listener(_options_changed))
+    from .support import Support
+
+    support = Support(hass, DOMAIN, "database-doctor", _TITLES.get(hass.config.language.split("-")[0], "Database Doctor"))
+    await support.async_setup()
+    entry.async_on_unload(support.unload)
     version = (await async_get_integration(hass, DOMAIN)).version
     await panel_custom.async_register_panel(
         hass,
