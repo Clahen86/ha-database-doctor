@@ -1,5 +1,5 @@
 // Database Doctor panel: tabs Overview · Energy · Data · Settings.
-import { defineSupport, supportText } from "./support.js";
+import { defineSupport, defineUpdate, supportText } from "./support.js";
 import { defineSuggest } from "./suggest.js";
 
 const EN = {
@@ -1564,6 +1564,11 @@ class DatabaseDoctorPanel extends HTMLElement {
       <div class="page ${tabs && this.data && this.welcomed && ["overview", "energy"].includes(this.tab) ? "cols" : ""} ${this.animate && this.data ? "anim" : ""}">${body}</div>
       ${this.snack ? `<div class="snack" role="status"><span class="grow">${esc(this.snack.text)}</span>${this.snack.undo ? `<button class="snackbtn" data-act="undo" data-id="${this.snack.undo}">${this.t("snackUndo")}</button>` : ""}<button class="snackx" data-act="snackClose" aria-label="×"><ha-icon icon="mdi:close"></ha-icon></button></div>` : ""}`;
     if (this.data && this.view === "tabs") this.animate = false;
+    if (this.view === "tabs") {  // the update card on top, when it's time
+      this._upd = this._upd || document.createElement(defineUpdate("database_doctor"));
+      this._upd.hass = this._hass;
+      this.shadowRoot.querySelector(".page")?.prepend(this._upd);
+    }
     this.scrollTop = y;
     const menu = this.shadowRoot.querySelector("ha-menu-button");
     if (menu) {
