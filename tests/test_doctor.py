@@ -316,3 +316,15 @@ async def test_keep_it_like_this_rule_skips_what_comes_into_use(recorder_mock, h
     overview = await doctor.async_overview(fresh=True)
     by_id = {e["entity_id"]: e for e in overview["entities"]}
     assert by_id["sensor.other_busy"]["keep_days"] == 3 and not by_id["sensor.keba_current"]["keep_days"]
+    by_id = {e["entity_id"]: e for e in overview["entities"]}
+    assert by_id["sensor.other_busy"]["keep_days"] == 3 and not by_id["sensor.keba_current"]["keep_days"]
+
+
+def test_ieee_three_part_identifier():
+    from types import SimpleNamespace
+
+    from custom_components.database_doctor.rates import ieee
+
+    dev = SimpleNamespace(identifiers={("ventwise", "01M5", "3674"), ("mqtt", "zigbee2mqtt_0x00158d0001a2b3c4")})
+    assert ieee(dev) == "0x00158d0001a2b3c4"
+    assert ieee(SimpleNamespace(identifiers={("ventwise", "01M5", "3674")})) is None

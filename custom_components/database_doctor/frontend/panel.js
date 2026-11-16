@@ -1029,8 +1029,8 @@ class DatabaseDoctorPanel extends HTMLElement {
       }
       // The slower parts come in behind the first picture.
       const [extra, rates] = await Promise.all([
-        this.ws("energy_extra").catch(() => null),
-        settings.mqtt ? this.ws("rates").catch(() => null) : Promise.resolve(null),
+        this.ws("energy_extra").catch((e) => { this.extraError = e.message || String(e); return null; }),
+        settings.mqtt ? this.ws("rates").catch((e) => { this.ratesError = e.message || String(e); return null; }) : Promise.resolve(null),
       ]);
       this.extra = extra;
       this.rates = rates;
@@ -1303,7 +1303,7 @@ class DatabaseDoctorPanel extends HTMLElement {
   }
 
   validationCard() {
-    if (!this.extra) return `<div class="card"><div class="spinner small-spin"></div></div>`;
+    if (!this.extra) return `<div class="card">${this.extraError ? `<p class="muted">${esc(this.t("error", { e: this.extraError }))}</p>` : `<div class="spinner small-spin"></div>`}</div>`;
     const list = this.extra.validation || [];
     if (!list.length) return `<div class="card okcard"><ha-icon icon="mdi:chart-box-outline"></ha-icon><span>${this.t("validationNone")}</span></div>`;
     // Old statistics of entities that are gone or not recorded: one group each, with one button for all.
@@ -1439,7 +1439,7 @@ class DatabaseDoctorPanel extends HTMLElement {
   ratesSection() {
     if (!this.settings.mqtt) return "";
     const r = this.rates;
-    if (!r) return `<div class="card"><h2>${this.t("ratesTitle")}</h2><div class="spinner small-spin"></div></div>`;
+    if (!r) return `<div class="card"><h2>${this.t("ratesTitle")}</h2>${this.ratesError ? `<p class="muted">${esc(this.t("error", { e: this.ratesError }))}</p>` : `<div class="spinner small-spin"></div>`}</div>`;
     if (!r.groups.length && !r.signals.count) return `<div class="card"><h2>${this.t("ratesTitle")}</h2><p class="muted">${this.t("noZ2m")}</p></div>`;
     const cur = (key, fallback) => this.choice[key] || fallback;
     const seg = (key, options, current) => `<div class="seg" role="radiogroup">${options.map((o) => `<button role="radio" aria-checked="${current === o}" class="${current === o ? "on" : ""}" data-act="level" data-key="${key}" data-level="${o}">${key === "signals" ? this.t(o) : this.t(`levels.${o}`)}</button>`).join("")}</div>`;

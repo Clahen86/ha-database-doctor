@@ -38,8 +38,9 @@ PROFILES = {
 
 
 def ieee(device: dr.DeviceEntry) -> str | None:
-    for _domain, value in device.identifiers:
-        if match := Z2M_ID.match(str(value).lower()):
+    for ident in device.identifiers:
+        # (domain, id) - but some integrations (VentWise) add a third part: only the id counts.
+        if len(ident) >= 2 and (match := Z2M_ID.match(str(ident[1]).lower())):
             return f"0x{match[1]}"
     return None
 
