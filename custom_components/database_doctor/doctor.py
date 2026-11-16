@@ -46,6 +46,7 @@ class Doctor:
         self.levels: dict[str, str] = {}  # the levels the user chose per group; new devices get them too
         self.settings: dict[str, Any] = dict(DEFAULT_SETTINGS)
         self._all: dict[str, dict[str, Any]] = {}
+        self._uses: dict[str, list] = {}  # every entity's uses, also ones the recorder leaves out (rates.py)
         self._per_row = 300.0
         self._cache: tuple[float, dict[str, Any]] | None = None
         self._lock = asyncio.Lock()
@@ -208,6 +209,7 @@ class Doctor:
                 return self._cache[1]
             result = await analysis.async_analyse(self.hass)
             uses, seen = await usage.async_uses(self.hass)
+            self._uses = uses
             protect = set(self.settings.get("protect") or [])
             for entity in result["entities"]:
                 entity["used_in"] = uses.get(entity["entity_id"], [])
@@ -255,6 +257,8 @@ class Doctor:
         for e in result["entities"]:
             if e["entity_id"] in busy or e.get("keep_days"):
                 continue  # being cleaned right now, or kept short every night already
+            if e["deleted"] and (e["used_in"] or e["protected"]):
+                continue  # gone, but still read (an old meter in Energy, a paused AppDaemon app's sensor): kept
             if e["deleted"]:
                 deleted.append(e["entity_id"])
                 saved += e["bytes"]
@@ -347,7 +351,7 @@ class Doctor:
         ]
         facts = {
             "size_mb": round((overview["size"] or 0) / 1e6), "growth_mb_day": round((overview["growth"] or 0) / 1e6, 1),
-            "free_gb": round((overview["free"] or 0) / 1e9, 1), "groups_mb": {k: round(v / 1e6) for k, v in overview["groups"].items()},
+            "free_gb": round(overview["free"] / 1e9, 1) if overview["free"] is not None else None, "groups_mb": {k: round(v / 1e6) for k, v in overview["groups"].items()},
             "top": top, "energy_issues": len(overview["energy_issues"]),
             "suggestion_mb": round(overview["suggestion"]["bytes"] / 1e6),
         }
@@ -371,7 +375,7 @@ class Doctor:
 
     async def async_rates(self) -> dict[str, Any]:
         await self.async_overview()
-        plan = await rates.async_plan(self.hass, self._all, self._per_row, self.settings["overrides"])
+        plan = await rates.async_plan(self.hass, self._all, self._per_row, self.settings["overrides"], self._uses)
         plan.pop("_signals", None)
         plan["profiles"] = rates.PROFILES
         plan["chosen"] = self.levels
@@ -382,7 +386,7 @@ class Doctor:
     ) -> dict[str, Any]:
         """Set groups to levels (or a profile's levels). only: one device (a new one)."""
         await self.async_overview()
-        plan = await rates.async_plan(self.hass, self._all, self._per_row, self.settings["overrides"])
+        plan = await rates.async_plan(self.hass, self._all, self._per_row, self.settings["overrides"], self._uses)
         if only:
             for group in plan["groups"]:
                 group["devices"] = [d for d in group["devices"] if d["id"] == only]
@@ -456,6 +460,9 @@ class Doctor:
         if deleted:
             # Long-term statistics of entities that are gone (only the recorder's own, never imported ones).
             gone = [s for s in deleted if ":" not in s]
+            # Never the statistics the Energy dashboard shows - years of a replaced meter's use stay.
+            energy_stats, _costs = await energy.async_energy_statistics(hass)
+            gone = [s for s in gone if s not in energy_stats]
             if gone:
                 get_instance(hass).async_clear_statistics(gone)
         self.history.append(record)
@@ -477,11 +484,20 @@ class Doctor:
                 {"entity_id": record["trim"], "keep_days": record["keep_days"]}, blocking=True,
             )
 
-    async def _async_repack(self, record: dict[str, Any]) -> None:
-        """The recorder's own repack (VACUUM for SQLite, OPTIMIZE TABLE for MariaDB/MySQL), once, after a clean-up."""
+    async def _async_repack(self, record: dict[str, Any], manual: bool = False) -> None:
+        """The recorder's own repack (VACUUM for SQLite, OPTIMIZE TABLE for MariaDB/MySQL), once, after a clean-up.
+
+        manual: the user pressed "Make the file smaller". Only SQLite is repacked by itself: on MariaDB and
+        PostgreSQL the repack locks the tables for a long time and needs free space as big as them, on a disk that
+        may be another server's - so there the user starts it when it suits."""
         if record.get("repacked") is not None:
             return
         instance = get_instance(self.hass)
+        if not manual and not instance.db_url.startswith(analysis.SQLITE):
+            record["repacked"] = False
+            record["repack_skipped"] = "engine"
+            self._save()
+            return
         size = await instance.async_add_executor_job(analysis.db_size, self.hass)
         free = self._cache[1].get("free") if self._cache else None
         if instance.db_url.startswith(analysis.SQLITE) and size and free is not None and free < size * 1.1:

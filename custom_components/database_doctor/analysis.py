@@ -8,6 +8,7 @@ database's size, which the recorder doesn't offer. Nothing here ever writes.
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import time
 from dataclasses import dataclass, field
@@ -62,39 +63,41 @@ def db_size(hass: HomeAssistant) -> int | None:
     return int(value) if value else None
 
 
+def _local(url: str) -> bool:
+    """A database server on Home Assistant's own machine: localhost, or an add-on (core-mariadb, 77b2833f-timescaledb)."""
+    host = (re.search(r"@\[?([^/:\]?]+)", url) or [None, ""])[1].lower()
+    return host in ("localhost", "127.0.0.1", "::1") or bool(re.match(r"(core|local|[0-9a-f]{8})[-_]", host))
+
+
 def read_db(hass: HomeAssistant) -> DbInfo:
     """Runs in the recorder's thread: row counts per entity (all, and the last days), statistics rows, size."""
     instance = get_instance(hass)
     since = time.time() - RECENT_DAYS * 86400
     with session_scope(session=instance.get_session(), read_only=True) as session:
-        total = dict(
+        # Counted by metadata id alone - no join: the database answers from its index, which matters on a big
+        # MariaDB/PostgreSQL. The names are looked up in the small metadata tables afterwards.
+        by_id = dict(session.execute(select(States.metadata_id, func.count()).group_by(States.metadata_id)).all())
+        recent_by_id = dict(
             session.execute(
-                select(StatesMeta.entity_id, func.count(States.state_id))
-                .join(States, States.metadata_id == StatesMeta.metadata_id)
-                .group_by(StatesMeta.entity_id)
-            ).all()
-        )
-        recent = dict(
-            session.execute(
-                select(StatesMeta.entity_id, func.count(States.state_id))
-                .join(States, States.metadata_id == StatesMeta.metadata_id)
+                select(States.metadata_id, func.count())
                 .where(States.last_updated_ts >= since)
-                .group_by(StatesMeta.entity_id)
+                .group_by(States.metadata_id)
             ).all()
         )
-        statistics = dict(
-            session.execute(
-                select(StatisticsMeta.statistic_id, func.count(Statistics.id))
-                .join(Statistics, Statistics.metadata_id == StatisticsMeta.id)
-                .group_by(StatisticsMeta.statistic_id)
-            ).all()
-        )
+        names = dict(session.execute(select(StatesMeta.metadata_id, StatesMeta.entity_id)).all())
+        stat_by_id = dict(session.execute(select(Statistics.metadata_id, func.count()).group_by(Statistics.metadata_id)).all())
+        stat_names = dict(session.execute(select(StatisticsMeta.id, StatisticsMeta.statistic_id)).all())
+    total = {names[m]: n for m, n in by_id.items() if m in names}
+    recent = {names[m]: n for m, n in recent_by_id.items() if m in names}
+    statistics = {stat_names[m]: n for m, n in stat_by_id.items() if m in stat_names}
     url = instance.db_url
     path = url.removeprefix(SQLITE) if url.startswith(SQLITE) else None
     engine = "sqlite" if path else url.split(":", 1)[0]
     size = db_size(hass)
     try:
-        free = shutil.disk_usage(os.path.dirname(path) if path else hass.config.path()).free
+        # Free space where the database is: known for SQLite and a database server on this machine (an add-on);
+        # a server elsewhere has its own disk, which can't be seen from here.
+        free = shutil.disk_usage(os.path.dirname(path) if path else hass.config.path()).free if path or _local(url) else None
     except OSError:
         free = None
     entities = {

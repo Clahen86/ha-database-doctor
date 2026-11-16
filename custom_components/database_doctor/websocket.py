@@ -217,5 +217,6 @@ async def ws_repack(hass: HomeAssistant, connection: websocket_api.ActiveConnect
         connection.send_error(msg["id"], "not_found", "No such clean-up")
         return
     record.pop("repacked", None)
-    await doctor._async_repack(record)
+    record.pop("repack_skipped", None)
+    await doctor._async_repack(record, manual=True)
     connection.send_result(msg["id"], {"repacking": record.get("repacked") is False, "skipped": record.get("repack_skipped")})

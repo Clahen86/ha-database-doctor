@@ -9,7 +9,7 @@ CHECK_DAYS = 120
 # How long the undo history and the daily database sizes are kept.
 KEEP_DAYS = 30
 # An analysis is reused this long unless the user asks for a fresh one.
-CACHE_SECONDS = 600
+CACHE_SECONDS = 1800  # a big MariaDB/PostgreSQL takes a while to count; the panel refreshes behind an older picture
 
 # The ai_task entity that explains the database in plain words (optional).
 CONF_AI = "ai_entity"

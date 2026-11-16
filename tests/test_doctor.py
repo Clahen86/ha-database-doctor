@@ -328,3 +328,24 @@ def test_ieee_three_part_identifier():
     dev = SimpleNamespace(identifiers={("ventwise", "01M5", "3674"), ("mqtt", "zigbee2mqtt_0x00158d0001a2b3c4")})
     assert ieee(dev) == "0x00158d0001a2b3c4"
     assert ieee(SimpleNamespace(identifiers={("ventwise", "01M5", "3674")})) is None
+
+
+def test_button_with_only_sensors_stays_instant(hass):
+    from types import SimpleNamespace
+
+    from custom_components.database_doctor.rates import _group
+
+    def e(eid):
+        return SimpleNamespace(entity_id=eid, domain=eid.split(".")[0], disabled_by=None, device_class=None,
+                               original_device_class=None)
+
+    assert _group([e("sensor.remote_battery"), e("sensor.remote_action")], hass) is None
+    assert _group([e("sensor.plug_power")], hass) is not None
+
+
+def test_remote_database_free_space_unknown():
+    from custom_components.database_doctor.analysis import _local
+
+    assert _local("mysql://u:p@core-mariadb/homeassistant")
+    assert _local("postgresql://u:p@77b2833f-timescaledb/homeassistant")
+    assert not _local("postgresql://u:p@192.168.1.5:5432/homeassistant")

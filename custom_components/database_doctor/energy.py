@@ -11,6 +11,7 @@ Every fix has an exact opposite, so it can be undone.
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+import logging
 import statistics as pystats
 from typing import Any
 
@@ -23,6 +24,8 @@ from homeassistant.components.recorder.statistics import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
+
+_LOGGER = logging.getLogger(__name__)
 
 from .const import CHECK_DAYS
 
@@ -95,6 +98,8 @@ def _issues(statistic_id: str, rows: list[dict[str, Any]], unit: str | None) -> 
         if missing >= MIN_GAP_HOURS and change > max(high * 3, MIN_SPIKE):
             # Real use that came all at once after the meter was away: spread it over the missing hours.
             prev = rows[i - 1]
+            if prev.get("sum") is None:
+                continue  # the sum before is unknown: it can't be spread - and it is real use, no spike
             issue |= {
                 "kind": "gap",
                 "missing": missing,
@@ -168,9 +173,13 @@ async def async_fix(hass: HomeAssistant, issue: dict[str, Any], back: bool = Fal
     if issue["statistic_id"] not in meta:
         return
     metadata = dict(meta[issue["statistic_id"]][1])
+    if issue.get("from_sum") is None:
+        # The sum before the gap is unknown: hours written from 0 would make a huge drop and a huge jump.
+        _LOGGER.warning("%s: the sum before the gap is unknown, so the gap is left as it is", issue["statistic_id"])
+        return
     steps = issue["missing"] + 1
     total = issue["value"]
-    base_sum, base_state = issue["from_sum"] or 0.0, issue["from_state"]
+    base_sum, base_state = issue["from_sum"], issue["from_state"]
     rows = []
     for n in range(1, steps):
         share = 0.0 if back else total * n / steps  # undo: flat again, so the jump is back in its hour

@@ -27,6 +27,8 @@ INSTANT = {
     "text", "media_player", "binary_sensor", "alarm_control_panel", "vacuum", "update",
 }
 SIGNAL = re.compile(r"(linkquality|_lqi|rssi)$")
+# A button's presses as a sensor (Zigbee2MQTT's older "action"/"click" sensor).
+ACTION = re.compile(r"_(action|click)$")
 CLIMATE = {"temperature", "humidity", "pressure", "illuminance", "carbon_dioxide", "pm25", "volatile_organic_compounds"}
 METER = {"power", "energy", "voltage", "current", "power_factor"}
 # Profiles: the level per group. Devices something uses are never set to "rare" (they get "normal").
@@ -99,10 +101,25 @@ def _instant(entries: list[er.RegistryEntry]) -> list[str]:
     return sorted({e.domain for e in entries if not e.disabled_by} - {"sensor"})
 
 
-def _group(entries: list[er.RegistryEntry], hass: HomeAssistant) -> str | None:
+def _has_triggers(hass: HomeAssistant, device: dr.DeviceEntry | None) -> bool:
+    """A button or remote: Zigbee2MQTT gives its presses as device triggers, often with only battery and link
+    sensors beside them - slowed down, presses would be lost."""
+    if device is None:
+        return False
+    try:
+        from homeassistant.components.mqtt import debug_info
+
+        return bool(debug_info.info_for_device(hass, device.id).get("triggers"))
+    except Exception:  # noqa: BLE001 - no MQTT
+        return False
+
+
+def _group(entries: list[er.RegistryEntry], hass: HomeAssistant, device: dr.DeviceEntry | None = None) -> str | None:
     """The group of a device that may be slowed down, or None when it must stay instant."""
     domains = {e.domain for e in entries if not e.disabled_by}
     if not domains or domains & INSTANT or domains - {"sensor"}:
+        return None
+    if any(ACTION.search(e.entity_id) for e in entries) or _has_triggers(hass, device):
         return None
     classes = set()
     for e in entries:
@@ -118,12 +135,20 @@ def _group(entries: list[er.RegistryEntry], hass: HomeAssistant) -> str | None:
 
 
 async def async_plan(
-    hass: HomeAssistant, entities: dict[str, dict[str, Any]], per_row: float, overrides: dict[str, str] | None = None
+    hass: HomeAssistant, entities: dict[str, dict[str, Any]], per_row: float, overrides: dict[str, str] | None = None,
+    uses: dict[str, list] | None = None,
 ) -> dict[str, Any]:
     """The groups with their devices, the level each has now and what each level would save a month.
 
-    overrides: device id -> a level of its own, or "never" (leave it alone)."""
+    overrides: device id -> a level of its own, or "never" (leave it alone).
+    uses: entity id -> where it is used, for every entity - also ones the recorder doesn't keep (a link sensor left
+    out of the database but read by an automation is still used)."""
     overrides = overrides or {}
+    uses = uses or {}
+
+    def used(entity_id: str) -> bool:
+        return bool(entities.get(entity_id, {}).get("used_in") or uses.get(entity_id))
+
     devices, registry = dr.async_get(hass), er.async_get(hass)
     skipped: list[dict[str, Any]] = []
     bases: dict[str, dict[str, int]] = {}
@@ -146,10 +171,10 @@ async def async_plan(
                 info = entities.get(entry.entity_id, {})
                 signals.append({
                     "entity_id": entry.entity_id, "device": device.name_by_user or device.name,
-                    "on": entry.disabled_by is None, "used": bool(info.get("used_in")),
+                    "on": entry.disabled_by is None, "used": used(entry.entity_id),
                     "per_day": info.get("per_day", 0),
                 })
-        group = _group(entries, hass)
+        group = _group(entries, hass, device)
         if group is None:
             if busy >= 200:
                 skipped.append({"name": device.name_by_user or device.name, "reason": "instant",
@@ -164,7 +189,7 @@ async def async_plan(
         groups[group]["devices"].append({
             "id": device.id, "ieee": address, "base": base, "name": device.name_by_user or device.name,
             "throttle": throttle, "level": level_of(throttle), "per_day": per_day,
-            "used": any(entities.get(e.entity_id, {}).get("used_in") for e in own),
+            "used": any(used(e.entity_id) for e in own),
             # "Never touch" on any of its entities keeps the whole device as it is.
             "override": "never" if any(entities.get(e.entity_id, {}).get("protected") for e in own)
             else overrides.get(device.id),

@@ -39,6 +39,7 @@ const EN = {
   recRepacking: "the file is being made smaller …",
   recSmaller: "the file is {n} smaller",
   recNoRoom: "too little free disk to make the file smaller",
+  recByHand: "on MariaDB/PostgreSQL making it smaller locks the database for a while and needs free space as big as it – start it when it suits you",
   repackNow: "Make the file smaller",
   cleaningTitle: "Cleaning up · {p} %",
   cleaningText: "Home Assistant works in the background – on a big database it can take an hour. Avoid restarting Home Assistant meanwhile (if you do, it carries on afterwards).",
@@ -254,6 +255,7 @@ const DA = {
   recRepacking: "filen gøres mindre …",
   recSmaller: "filen er {n} mindre",
   recNoRoom: "for lidt fri plads på disken til at gøre filen mindre",
+  recByHand: "på MariaDB/PostgreSQL låser det databasen et stykke tid og kræver lige så meget fri plads, som den fylder – start det, når det passer dig",
   repackNow: "Gør filen mindre",
   cleaningTitle: "Oprydning i gang · {p} %",
   cleaningText: "Home Assistant arbejder i baggrunden – på en stor database kan det tage en time. Genstart helst ikke Home Assistant imens (gør du, fortsætter den bagefter).",
@@ -469,6 +471,7 @@ const DE = {
   recRepacking: "die Datei wird verkleinert …",
   recSmaller: "die Datei ist {n} kleiner",
   recNoRoom: "zu wenig freier Speicher zum Verkleinern",
+  recByHand: "bei MariaDB/PostgreSQL sperrt das Verkleinern die Datenbank eine Weile und braucht so viel freien Platz, wie sie groß ist – starte es, wenn es passt",
   repackNow: "Datei verkleinern",
   cleaningTitle: "Aufräumen läuft · {p} %",
   cleaningText: "Der Recorder arbeitet im Hintergrund – bei einer großen Datenbank kann das eine Stunde dauern. Starte Home Assistant möglichst nicht neu (sonst geht es danach weiter).",
@@ -631,6 +634,7 @@ const SV = {
   recRepacking: "filen görs mindre …",
   recSmaller: "filen är {n} mindre",
   recNoRoom: "för lite ledigt diskutrymme för att göra filen mindre",
+  recByHand: "på MariaDB/PostgreSQL låser det databasen en stund och kräver lika mycket ledigt utrymme som den tar – starta det när det passar dig",
   repackNow: "Gör filen mindre",
   cleaningTitle: "Städning pågår · {p} %",
   cleaningText: "Recordern arbetar i bakgrunden – på en stor databas kan det ta en timme. Undvik att starta om Home Assistant under tiden (gör du det fortsätter den efteråt).",
@@ -793,6 +797,7 @@ const NL = {
   recRepacking: "het bestand wordt kleiner gemaakt …",
   recSmaller: "het bestand is {n} kleiner",
   recNoRoom: "te weinig vrije schijfruimte om het bestand kleiner te maken",
+  recByHand: "bij MariaDB/PostgreSQL vergrendelt verkleinen de database een tijdje en is er evenveel vrije ruimte nodig als hij groot is – start het wanneer het jou uitkomt",
   repackNow: "Bestand kleiner maken",
   cleaningTitle: "Opruimen bezig · {p} %",
   cleaningText: "De recorder werkt op de achtergrond – bij een grote database kan dat een uur duren. Herstart Home Assistant liever niet ondertussen (doe je dat, dan gaat het daarna verder).",
@@ -1249,14 +1254,15 @@ class DatabaseDoctorPanel extends HTMLElement {
       if (r.kind !== "cleanup") return "";
       const bits = [];
       if (r.freed) bits.push(this.t("recFreed", { n: this.bytes(r.freed) }));
-      if (r.repack_skipped) bits.push(this.t("recNoRoom"));
+      if (r.repack_skipped === "engine") bits.push(this.t("recByHand"));
+      else if (r.repack_skipped) bits.push(this.t("recNoRoom"));
       else if (r.repacking) bits.push(this.t("recRepacking"));
       else if (r.saved) bits.push(this.t("recSmaller", { n: this.bytes(r.saved) }));
       return bits.length ? ` · ${esc(bits.join(" · "))}` : "";
     };
     const action = (r) => r.kind !== "cleanup"
       ? (r.undone ? `<span class="muted small">${this.t("undone")}</span>` : `<button class="soft" data-act="undo" data-id="${r.id}">${this.t("undo")}</button>`)
-      : r.finished && !r.repacking && !r.saved && !r.repack_skipped ? `<button class="soft" data-act="repackNow" data-id="${r.id}">${this.t("repackNow")}</button>` : "";
+      : r.finished && !r.repacking && !r.saved && (!r.repack_skipped || r.repack_skipped === "engine") ? `<button class="soft" data-act="repackNow" data-id="${r.id}">${this.t("repackNow")}</button>` : "";
     const row = (r) => `<div class="irow"><div class="grow"><div class="name">${esc(label(r))}</div>
         <div class="muted small">${esc(this.when(r.at))}${extra(r)}</div></div>${action(r)}</div>`;
     return `<div class="card"><div class="head"><b>${this.t("recent")}</b></div>${list.map(row).join("")}</div>`;
