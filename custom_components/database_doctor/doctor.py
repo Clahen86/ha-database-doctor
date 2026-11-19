@@ -104,6 +104,9 @@ class Doctor:
     def _da(self) -> bool:
         return self.hass.config.language.startswith(("da", "nb", "nn", "no"))
 
+    def _fr(self) -> bool:
+        return self.hass.config.language.startswith("fr")
+
     async def _async_nightly(self, _now: Any = None) -> None:
         """Keep only N days of detail for the groups and entities the user chose. Graphs and hourly statistics stay,
         and an entity whose history has come into use since (a graph, Energy, a helper, "Never touch") is skipped."""
@@ -148,6 +151,12 @@ class Doctor:
                     + (f"{issues} forkerte tal i Energi. " if issues else "Ingen fejl i Energi. ")
                     + (f"Du kan spare {mb(overview['suggestion']['bytes'])}. " if overview["suggestion"]["bytes"] else "")
                     + "[Åbn Database-doktor](/database-doctor)")
+        elif self._fr():
+            text = (f"La base de données fait {mb(overview['size'] or 0)}"
+                    + (f" et a grossi de {mb(week)} cette semaine" if week is not None else "") + ". "
+                    + (f"{issues} valeurs fausses dans Énergie. " if issues else "Aucune valeur fausse dans Énergie. ")
+                    + (f"Vous pouvez gagner {mb(overview['suggestion']['bytes'])}. " if overview["suggestion"]["bytes"] else "")
+                    + "[Ouvrir Database Doctor](/database-doctor)")
         else:
             text = (f"The database is {mb(overview['size'] or 0)}"
                     + (f" and grew {mb(week)} this week" if week is not None else "") + ". "
@@ -173,7 +182,8 @@ class Doctor:
         persistent_notification.async_create(
             self.hass,
             (f"{len(new)} forkerte tal i Energi ({names}). [Åbn Database-doktor](/database-doctor) for at rette dem."
-             if da else f"{len(new)} wrong numbers in Energy ({names}). [Open Database Doctor](/database-doctor) to fix them."),
+             if da else f"{len(new)} valeurs fausses dans Énergie ({names}). [Ouvrir Database Doctor](/database-doctor) pour les corriger."
+             if self._fr() else f"{len(new)} wrong numbers in Energy ({names}). [Open Database Doctor](/database-doctor) to fix them."),
             title="Database-doktor" if da else "Database Doctor",
             notification_id=f"{DOMAIN}_energy",
         )
@@ -355,7 +365,7 @@ class Doctor:
             "top": top, "energy_issues": len(overview["energy_issues"]),
             "suggestion_mb": round(overview["suggestion"]["bytes"] / 1e6),
         }
-        lang = "Danish" if language.startswith(("da", "nb", "nn", "no")) else "English"
+        lang = "Danish" if language.startswith(("da", "nb", "nn", "no")) else "French" if language.startswith("fr") else "English"
         result = await self.hass.services.async_call(
             "ai_task", "generate_data",
             {

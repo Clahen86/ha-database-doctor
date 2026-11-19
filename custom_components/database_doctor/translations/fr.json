@@ -1,0 +1,24 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Database Doctor",
+        "description": "Trouve les valeurs fausses dans le tableau de bord Énergie et montre ce qui remplit votre base de données. Tout se passe dans le panneau Database Doctor de la barre latérale."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Database Doctor est déjà configuré."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "IA",
+        "description": "Choisissez une entité de tâche IA pour que la base de données soit expliquée en mots simples dans le panneau. Facultatif.",
+        "data": {
+          "ai_entity": "Tâche IA"
+        }
+      }
+    }
+  }
+}

@@ -21,7 +21,7 @@ from .doctor import Doctor
 type DatabaseDoctorConfigEntry = ConfigEntry[Doctor]
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
-_TITLES = {"da": "Database-doktor", "nb": "Database-doktor", "sv": "Databasdoktor", "de": "Datenbank-Doktor"}
+_TITLES = {"da": "Database-doktor", "nb": "Database-doktor", "sv": "Databasdoktor", "de": "Datenbank-Doktor", "fr": "Docteur base de données"}
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:

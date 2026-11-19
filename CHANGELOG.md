@@ -2,6 +2,10 @@
 
 Newest first. Each version lists what changed since the one before.
 
+## 0.14.1 – 2026-11-19
+
+- French translation: panel, setup, notifications and AI explanation
+
 ## 0.14.0 – 2026-11-16
 
 - Keep used and Energy statistics, buttons never slowed, use seen for every entity, repack on MariaDB/PostgreSQL by hand, lighter counting, free space only where known, safer gap fix
