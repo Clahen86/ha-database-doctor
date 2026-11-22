@@ -2,6 +2,10 @@
 
 Newest first. Each version lists what changed since the one before.
 
+## 0.14.2 – 2026-11-22
+
+- No more warning in Home Assistant's log at start-up (the version was read from disk in the event loop)
+
 ## 0.14.1 – 2026-11-19
 
 - French translation: panel, setup, notifications and AI explanation
